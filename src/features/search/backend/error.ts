@@ -1,0 +1,7 @@
+export const SEARCH_ERROR_CODES = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  SEARCH_API_ERROR: 'SEARCH_API_ERROR',
+  RATE_LIMIT: 'RATE_LIMIT',
+} as const;
+
+export type SearchErrorCode = (typeof SEARCH_ERROR_CODES)[keyof typeof SEARCH_ERROR_CODES];

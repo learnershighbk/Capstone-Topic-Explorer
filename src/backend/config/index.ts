@@ -8,9 +8,24 @@ const envSchema = z.object({
 
 let cachedConfig: AppConfig | null = null;
 
+// Check if we're in build context (no runtime env vars)
+const isBuildTime = () => {
+  return !process.env.SUPABASE_URL && process.env.NODE_ENV === 'production';
+};
+
 export const getAppConfig = (): AppConfig => {
   if (cachedConfig) {
     return cachedConfig;
+  }
+
+  // During build time, return placeholder config
+  if (isBuildTime()) {
+    return {
+      supabase: {
+        url: 'https://placeholder.supabase.co',
+        serviceRoleKey: 'placeholder-key',
+      },
+    };
   }
 
   const parsed = envSchema.safeParse({

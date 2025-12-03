@@ -1,0 +1,9 @@
+export const OPENAI_ERROR_CODES = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  API_ERROR: 'API_ERROR',
+  RATE_LIMIT: 'RATE_LIMIT',
+  PARSE_ERROR: 'PARSE_ERROR',
+  TIMEOUT: 'TIMEOUT',
+} as const;
+
+export type OpenAIErrorCode = (typeof OPENAI_ERROR_CODES)[keyof typeof OPENAI_ERROR_CODES];
