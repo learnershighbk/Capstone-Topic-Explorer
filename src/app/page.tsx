@@ -307,7 +307,7 @@ export default function HomePage() {
 
       <footer className="text-center py-6 text-gray-500 text-sm">
         <p>Capstone Topic Explorer - Powered by OpenAI GPT-4o</p>
-        <p className="mt-1">Designed for GKS Scholars</p>
+        <p className="mt-1">Designed for KDI School of Public Policy and Management</p>
       </footer>
     </div>
   );
