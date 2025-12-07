@@ -42,48 +42,46 @@ export function Step1Scope({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        Step 1: Define Your Scope
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <h2 className="mb-6 text-2xl font-bold text-gray-900">
+        Step 1: 프로젝트 범위 정의
       </h2>
 
       <ImportantNotice type="info">
         <p>
-          <strong>GKS Scholars:</strong> Select your country of interest and
-          describe your research area. This will help generate relevant policy
-          issues and capstone topics.
+          <strong>KDI School 학생:</strong> 관심 있는 국가를 선택하고 연구 분야를
+          설명해주세요. 이를 바탕으로 관련 정책 이슈와 캡스톤 주제를 생성합니다.
         </p>
       </ImportantNotice>
 
       <div className="mt-6 space-y-6">
         <div>
-          <Label htmlFor="country" className="text-lg font-medium mb-2 block">
-            Country of Interest
+          <Label htmlFor="country" className="mb-2 block text-lg font-semibold text-gray-900">
+            관심 국가
           </Label>
           <CountrySelect
             value={country}
             onChange={onCountryChange}
-            placeholder="Select a country (South Korea is at the top)"
+            placeholder="국가를 선택하세요 (대한민국이 상단에 표시됩니다)"
           />
-          <p className="text-sm text-gray-500 mt-1">
-            193 UN member countries available
+          <p className="mt-1 text-sm text-gray-500">
+            UN 회원국 193개국 중에서 선택 가능합니다
           </p>
         </div>
 
         <div>
-          <Label htmlFor="interest" className="text-lg font-medium mb-2 block">
-            Area of Interest
+          <Label htmlFor="interest" className="mb-2 block text-lg font-semibold text-gray-900">
+            관심 분야
           </Label>
           <Textarea
             id="interest"
             value={interest}
             onChange={(e) => onInterestChange(e.target.value)}
-            placeholder="e.g., Digital Healthcare, Sustainable Energy Policy, Education Reform, Urban Development..."
-            className="min-h-[120px]"
+            placeholder="예: 디지털 헬스케어, 지속가능한 에너지 정책, 교육 개혁, 도시 개발..."
+            className="min-h-[120px] border-gray-300 focus:border-[#615EEB] focus:ring-[#615EEB]"
           />
-          <p className="text-sm text-gray-500 mt-1">
-            Be specific about your research interests for better topic
-            suggestions
+          <p className="mt-1 text-sm text-gray-500">
+            더 나은 주제 제안을 위해 연구 관심사를 구체적으로 작성해주세요
           </p>
         </div>
 
@@ -91,22 +89,22 @@ export function Step1Scope({
 
         <div className="flex flex-col items-end gap-2 pt-4">
           {!isLoggedIn && (
-            <p className="text-amber-600 text-sm">
-              Please login to generate policy issues
+            <p className="text-sm text-amber-600">
+              정책 이슈를 생성하려면 로그인이 필요합니다
             </p>
           )}
           <Button
             onClick={handleSubmit}
             disabled={isLoading || !country || !interest.trim() || !isLoggedIn}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 disabled:bg-gray-400"
+            className="rounded-full bg-[#615EEB] px-8 py-3 text-white transition-all hover:bg-[#5250d9] hover:shadow-md disabled:bg-gray-300 disabled:hover:bg-gray-300"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Generating Issues...
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                정책 이슈 생성 중...
               </span>
             ) : (
-              'Generate Policy Issues'
+              '정책 이슈 생성하기'
             )}
           </Button>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Header, ProgressBar, FullPageLoader } from '@/components/common';
+import { useState, useCallback, useRef } from 'react';
+import { Header, ProgressBar, FullPageLoader, HeroSection } from '@/components/common';
 import { Step1Scope, Step2Issues, Step3Topics, Step4Analysis } from '@/components/steps';
 import { useAuth } from '@/features/capstone-auth';
 import { apiClient } from '@/lib/remote/api-client';
@@ -15,8 +15,10 @@ import type {
 
 export default function HomePage() {
   const { isLoggedIn } = useAuth();
+  const formSectionRef = useRef<HTMLDivElement>(null);
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
+  const [showHero, setShowHero] = useState(true);
 
   // Form data
   const [country, setCountry] = useState('');
@@ -190,6 +192,7 @@ export default function HomePage() {
   // Reset all state
   const handleReset = useCallback(() => {
     setCurrentStep(1);
+    setShowHero(true);
     setCountry('');
     setInterest('');
     setIssues([]);
@@ -201,6 +204,14 @@ export default function HomePage() {
     setVerifiedReferences([]);
     setUnverifiedDataSources([]);
     setUnverifiedReferences([]);
+  }, []);
+
+  // Handle get started from hero
+  const handleGetStarted = useCallback(() => {
+    setShowHero(false);
+    setTimeout(() => {
+      formSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   }, []);
 
   // Go back handlers
@@ -230,18 +241,35 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Capstone Project Topic Explorer
-          </h1>
-          <p className="text-gray-600">
-            AI-powered research topic discovery for GKS scholars
-          </p>
-        </div>
+      {showHero && currentStep === 1 && <HeroSection onGetStarted={handleGetStarted} />}
+
+      <main
+        ref={formSectionRef}
+        className={`max-w-4xl mx-auto px-4 ${showHero && currentStep === 1 ? 'pt-8' : 'pt-12 pb-8'}`}
+      >
+        {!showHero && currentStep === 1 && (
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              프로젝트 범위 설정
+            </h2>
+            <p className="text-gray-600">
+              국가와 관심사를 선택하여 시작하세요
+            </p>
+          </div>
+        )}
+
+        {currentStep > 1 && (
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              {currentStep === 2 && '정책 이슈 선택'}
+              {currentStep === 3 && '연구 주제 선택'}
+              {currentStep === 4 && '분석 결과'}
+            </h2>
+          </div>
+        )}
 
         <ProgressBar currentStep={currentStep} />
 
@@ -305,9 +333,12 @@ export default function HomePage() {
         )}
       </main>
 
-      <footer className="text-center py-6 text-gray-500 text-sm">
-        <p>Capstone Topic Explorer - Powered by OpenAI GPT-4o</p>
-        <p className="mt-1">Designed for KDI School of Public Policy and Management</p>
+      <footer className="mt-16 border-t border-gray-200 bg-gray-50">
+        <div className="mx-auto max-w-7xl px-4 py-8 text-center text-sm text-gray-500">
+          <p className="font-medium text-gray-700">Capstone Topic Explorer</p>
+          <p className="mt-2">Powered by OpenAI GPT-4o</p>
+          <p className="mt-1">Designed for KDI School of Public Policy and Management</p>
+        </div>
       </footer>
     </div>
   );

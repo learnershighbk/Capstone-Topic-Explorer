@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth, LoginModal } from '@/features/capstone-auth';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 export function Header() {
   const { isLoggedIn, studentId, isLoading, logout } = useAuth();
@@ -15,31 +16,39 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-blue-600 text-white shadow-md">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-bold hover:opacity-90">
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-sm"
+      >
+        <div className="mx-auto max-w-7xl px-4 py-4 lg:px-8">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-xl font-bold text-gray-900 transition-colors hover:text-[#615EEB] lg:text-2xl"
+            >
               Capstone Topic Explorer
             </Link>
 
-            <nav className="flex items-center gap-4">
+            <nav className="flex items-center gap-3 lg:gap-4">
               {isLoading ? (
-                <div className="h-10 w-24 bg-blue-500 animate-pulse rounded" />
+                <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
               ) : isLoggedIn ? (
                 <>
-                  <span className="text-sm hidden sm:inline">
-                    Student ID: {studentId}
+                  <span className="hidden text-sm text-gray-600 sm:inline">
+                    Student ID: <span className="font-medium text-gray-900">{studentId}</span>
                   </span>
                   <Link
                     href="/my-page"
-                    className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"
+                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-[#615EEB] hover:bg-[#615EEB]/5 hover:text-[#615EEB]"
                   >
                     My Page
                   </Link>
                   <Button
                     variant="outline"
                     onClick={handleLogout}
-                    className="bg-transparent border-white text-white hover:bg-white hover:text-blue-600"
+                    className="border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   >
                     Logout
                   </Button>
@@ -47,7 +56,7 @@ export function Header() {
               ) : (
                 <Button
                   onClick={() => setIsLoginModalOpen(true)}
-                  className="bg-white text-blue-600 hover:bg-gray-100"
+                  className="rounded-full bg-[#615EEB] px-5 py-2 text-sm font-medium text-white transition-all hover:bg-[#5250d9] hover:shadow-md"
                 >
                   Login
                 </Button>
@@ -55,7 +64,7 @@ export function Header() {
             </nav>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       <LoginModal
         isOpen={isLoginModalOpen}
