@@ -37,13 +37,13 @@ const FEATURE_CARDS = [
 export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSectionProps) {
   return (
     <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#FFFCF1] via-white to-gray-50">
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-10 text-center lg:pt-14">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-14 text-center lg:pt-16">
         {/* Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="font-serif text-3xl font-bold italic leading-tight text-gray-900 md:text-4xl"
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="font-serif text-3xl font-bold italic leading-tight text-gray-900 md:text-4xl lg:text-5xl"
         >
           Capstone Project Topic Explorer
         </motion.h1>
@@ -52,8 +52,8 @@ export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSe
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mx-auto mt-3 max-w-2xl text-base text-gray-600"
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mx-auto mt-4 max-w-2xl text-base text-gray-600 lg:text-lg"
         >
           An AI-powered capstone project topic discovery tool for KDI School students.
         </motion.p>
@@ -62,13 +62,13 @@ export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSe
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mx-auto mt-8 max-w-5xl"
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mx-auto mt-10 max-w-5xl"
         >
           <h2 className="mb-4 text-base font-semibold text-gray-800">
             Why use Capstone Topic Explorer?
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURE_CARDS.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -76,16 +76,16 @@ export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSe
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 + index * 0.05 }}
-                  className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md"
+                  transition={{ duration: 0.4, delay: 0.4 + index * 0.07 }}
+                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
                 >
-                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#615EEB]/10">
+                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#615EEB]/10">
                     <Icon className="h-4 w-4 text-[#615EEB]" />
                   </div>
                   <h3 className="mb-1 text-sm font-semibold text-gray-900">
                     {feature.title}
                   </h3>
-                  <p className="text-xs leading-relaxed text-gray-600">{feature.description}</p>
+                  <p className="text-xs leading-relaxed text-gray-500">{feature.description}</p>
                 </motion.div>
               );
             })}
@@ -97,8 +97,8 @@ export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSe
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mt-8 pb-10"
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mt-10 pb-14"
           >
             <Button
               onClick={onGetStarted}
@@ -113,12 +113,12 @@ export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSe
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="mx-auto mt-8 max-w-md pb-10"
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mx-auto mt-10 max-w-md pb-14"
           >
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-1 text-xl font-bold text-gray-900">LOGIN</h2>
-              <p className="mb-4 text-sm text-gray-500">
+            <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-sm">
+              <h2 className="mb-2 text-xl font-bold text-gray-900">LOGIN</h2>
+              <p className="mb-5 text-sm text-gray-500">
                 9자리 학번을 입력하여 로그인 하세요
               </p>
               <LoginForm layout="inline" onSuccess={onLoginSuccess} />
