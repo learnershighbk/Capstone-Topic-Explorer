@@ -77,7 +77,7 @@ export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSe
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.4 + index * 0.07 }}
-                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md flex flex-col items-center text-center"
                 >
                   <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#615EEB]/10">
                     <Icon className="h-4 w-4 text-[#615EEB]" />
