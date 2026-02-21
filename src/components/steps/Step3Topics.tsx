@@ -30,9 +30,6 @@ export function Step3Topics({
 }: Step3TopicsProps) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">
-        Step 3: Explore Capstone Topics
-      </h2>
       <p className="text-gray-600 mb-6">
         Topics for <span className="font-semibold">{selectedIssue.issue}</span>{' '}
         in <span className="font-semibold">{country}</span>
@@ -49,15 +46,15 @@ export function Step3Topics({
             onClick={() => onSelectTopic(topic)}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
               selectedTopic?.title === topic.title
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                ? 'border-[#615EEB] bg-[#615EEB]/5'
+                : 'border-gray-200 hover:border-[#615EEB]/40 hover:bg-gray-50'
             }`}
           >
             <div className="flex items-start gap-3">
               <span
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 ${
                   selectedTopic?.title === topic.title
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[#615EEB] text-white'
                     : 'bg-gray-200 text-gray-600'
                 }`}
               >
@@ -79,11 +76,11 @@ export function Step3Topics({
           variant="outline"
           onClick={onGenerateMore}
           disabled={isGeneratingMore}
-          className="text-blue-600 border-blue-600 hover:bg-blue-50"
+          className="text-[#615EEB] border-[#615EEB] hover:bg-[#615EEB]/5"
         >
           {isGeneratingMore ? (
             <span className="flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-[#615EEB] border-t-transparent rounded-full animate-spin" />
               Generating...
             </span>
           ) : (
@@ -99,7 +96,7 @@ export function Step3Topics({
         <Button
           onClick={onNext}
           disabled={!selectedTopic || isLoading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+          className="bg-[#615EEB] hover:bg-[#5250d9] text-white px-8"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

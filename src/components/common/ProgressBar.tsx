@@ -3,6 +3,7 @@
 interface ProgressBarProps {
   currentStep: number;
   totalSteps?: number;
+  onStepClick?: (step: number) => void;
 }
 
 const STEP_LABELS = [
@@ -12,7 +13,7 @@ const STEP_LABELS = [
   'Detailed Topic Analysis',
 ];
 
-export function ProgressBar({ currentStep, totalSteps = 4 }: ProgressBarProps) {
+export function ProgressBar({ currentStep, totalSteps = 4, onStepClick }: ProgressBarProps) {
   return (
     <div className="w-full max-w-4xl mx-auto mb-8">
       <div className="flex items-center justify-between">
@@ -20,6 +21,7 @@ export function ProgressBar({ currentStep, totalSteps = 4 }: ProgressBarProps) {
           const stepNumber = index + 1;
           const isActive = stepNumber === currentStep;
           const isCompleted = stepNumber < currentStep;
+          const isClickable = isCompleted && onStepClick;
 
           return (
             <div key={stepNumber} className="flex flex-col items-center flex-1">
@@ -27,17 +29,20 @@ export function ProgressBar({ currentStep, totalSteps = 4 }: ProgressBarProps) {
                 {index > 0 && (
                   <div
                     className={`h-1 flex-1 ${
-                      isCompleted ? 'bg-blue-600' : 'bg-gray-300'
+                      isCompleted ? 'bg-[#615EEB]' : 'bg-gray-300'
                     }`}
                   />
                 )}
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                <button
+                  type="button"
+                  disabled={!isClickable}
+                  onClick={() => isClickable && onStepClick(stepNumber)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
                     isActive
-                      ? 'bg-blue-600 text-white ring-4 ring-blue-200'
+                      ? 'bg-[#615EEB] text-white ring-4 ring-[#615EEB]/20'
                       : isCompleted
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-300 text-gray-600'
+                        ? 'bg-[#615EEB] text-white cursor-pointer hover:ring-4 hover:ring-[#615EEB]/20 hover:scale-110'
+                        : 'bg-gray-300 text-gray-600 cursor-default'
                   }`}
                 >
                   {isCompleted ? (
@@ -55,18 +60,18 @@ export function ProgressBar({ currentStep, totalSteps = 4 }: ProgressBarProps) {
                   ) : (
                     stepNumber
                   )}
-                </div>
+                </button>
                 {index < totalSteps - 1 && (
                   <div
                     className={`h-1 flex-1 ${
-                      isCompleted ? 'bg-blue-600' : 'bg-gray-300'
+                      isCompleted ? 'bg-[#615EEB]' : 'bg-gray-300'
                     }`}
                   />
                 )}
               </div>
               <span
                 className={`mt-2 text-xs sm:text-sm text-center ${
-                  isActive ? 'text-blue-600 font-semibold' : 'text-gray-500'
+                  isActive ? 'text-[#615EEB] font-semibold' : 'text-gray-500'
                 }`}
               >
                 {STEP_LABELS[index]}
