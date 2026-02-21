@@ -7,7 +7,7 @@
 
 ## 세션 A: 우선순위 높음 (핵심 UX 문제)
 
-### A-1. 진행 중 데이터 유실 방지
+### A-1. 진행 중 데이터 유실 방지 ~~[DONE]~~
 
 **문제**: `src/app/page.tsx`의 모든 스텝 상태(country, interest, issues, selectedIssue, topics, selectedTopic, analysis 등)가 `useState`로만 관리되어, 브라우저 새로고침/뒤로가기 시 Step 1~4 전체 데이터가 즉시 사라짐. OpenAI API 호출 3회(각 수초~십수초)를 거쳐 도달한 결과가 한 번의 실수로 소실됨.
 
@@ -38,7 +38,7 @@ const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
 
 ---
 
-### A-2. alert() 에러 처리를 toast로 교체
+### A-2. alert() 에러 처리를 toast로 교체 ~~[DONE]~~
 
 **문제**: `src/app/page.tsx`에서 모든 API 실패 시 `alert()`로 처리. 브라우저를 블로킹하고, 에러 유형(rate limit, 네트워크, 서버 오류)에 따른 차별화된 안내 없음.
 
@@ -78,7 +78,7 @@ alert('Failed to delete analysis. Please try again.');
 
 ---
 
-### A-3. 미로그인 시 조기 안내 및 로그인 모달 연동
+### A-3. 미로그인 시 조기 안내 및 로그인 모달 연동 ~~[DONE]~~
 
 **문제**: Step 1에서 국가 선택 + 관심분야 입력을 모두 완료한 뒤에야 미로그인 상태를 알게 됨. 하단에 작은 텍스트(`text-sm text-amber-600`)로 경고가 있지만 놓치기 쉬움.
 
@@ -108,7 +108,7 @@ alert('Failed to delete analysis. Please try again.');
 
 ---
 
-### A-4. Step 4 분석 로딩 시 단계별 진행 상태 표시
+### A-4. Step 4 분석 로딩 시 단계별 진행 상태 표시 ~~[DONE]~~
 
 **문제**: 분석 생성 중 `FullPageLoader`가 전체 화면을 덮어 10~30초간 학생이 아무 정보 없이 대기. 분석 생성 → 데이터 소스 검증 → 참고문헌 검증 3단계를 구분할 수 없음.
 
@@ -153,7 +153,7 @@ handleGenerateAnalysis:
 
 ## 세션 B: 우선순위 중간 (사용 편의성)
 
-### B-5. My Page 목록 정보 보강
+### B-5. My Page 목록 정보 보강 ~~[DONE]~~
 
 **문제**: 저장된 분석 카드에 country, topic_title, created_at만 표시. 여러 분석을 저장했을 때 구분이 어려움.
 
@@ -173,7 +173,7 @@ handleGenerateAnalysis:
 
 ---
 
-### B-6. 저장 성공 후 My Page 이동 동선 추가
+### B-6. 저장 성공 후 My Page 이동 동선 추가 ~~[DONE]~~
 
 **문제**: Step 4에서 저장 성공 시 ImportantNotice만 표시되고, My Page로 이동하는 버튼/링크가 없음. 학생이 Header에서 My Page를 수동으로 찾아야 함.
 
@@ -197,7 +197,7 @@ handleGenerateAnalysis:
 
 ---
 
-### B-7. 중복 저장 방지
+### B-7. 중복 저장 방지 ~~[DONE]~~
 
 **문제**: 같은 분석을 여러 번 저장 가능. 버튼 연타 시 동일 데이터 중복 생성.
 
@@ -216,7 +216,7 @@ handleGenerateAnalysis:
 
 ---
 
-### B-8. Step 2 정책 이슈에 설명 추가
+### B-8. Step 2 정책 이슈에 설명 추가 ~~[DONE]~~
 
 **문제**: 10개 정책 이슈가 제목(issue)과 점수만 표시. 학생이 이슈를 충분히 이해하지 못한 채 선택해야 함.
 
@@ -244,7 +244,7 @@ export interface PolicyIssue {
 
 ---
 
-### B-9. Step 3 주제에 설명 추가
+### B-9. Step 3 주제에 설명 추가 ~~[DONE]~~
 
 **문제**: Topic 타입이 `{ title: string }`만 가짐. 유사한 주제 구분이 어려움.
 
@@ -271,7 +271,7 @@ export interface Topic {
 
 ---
 
-### B-10. 국가 선택 UX 개선
+### B-10. 국가 선택 UX 개선 ~~[CANCELLED]~~
 
 **문제**: 193개국 전체를 스크롤하기엔 목록이 길고, GKS 장학생 출신 빈도가 높은 국가에 대한 빠른 접근이 없음.
 
@@ -283,11 +283,13 @@ export interface Topic {
 - 그룹 구분선으로 "--- 전체 국가 ---" 추가
 - (선택) `localStorage`에 최근 선택 국가 저장 후 상단 표시
 
+> **롤백 사유**: 특정 국가를 우선 표시하는 것이 다른 국가 학생에게 차별로 느껴질 수 있어 구현 후 롤백함. 검색 기능만 유지.
+
 ---
 
 ## 세션 C: 우선순위 낮음 (부가 기능)
 
-### C-11. 언어 통일 (영어)
+### C-11. 언어 통일 (영어) ~~[DONE]~~
 
 **문제**: UI 전반에 한국어/영어 혼용. GKS 장학생은 외국인이므로 영어 통일이 적절.
 
@@ -311,7 +313,7 @@ Step2~4 제목: 영어 ("Step 2: Identify Key Policy Issues")
 
 ---
 
-### C-12. 분석 결과 내보내기 (Export)
+### C-12. 분석 결과 내보내기 (Export) ~~[DONE]~~
 
 **문제**: Step 4 및 My Page 상세 페이지에서 분석 결과를 PDF/복사 등으로 내보낼 수 없음.
 
@@ -326,7 +328,7 @@ Step2~4 제목: 영어 ("Step 2: Identify Key Policy Issues")
 
 ---
 
-### C-13. Step 간 결과 캐싱
+### C-13. Step 간 결과 캐싱 ~~[DONE]~~
 
 **문제**: Step 2에서 이슈를 선택하고 Step 3으로 간 뒤, 다른 이슈를 시도하려면 뒤로 갔다가 다시 API 호출 필요.
 
@@ -357,7 +359,7 @@ const handleBackToStep3 = () => {
 
 ---
 
-### C-14. 미검증 항목 안내 강화
+### C-14. 미검증 항목 안내 강화 ~~[DONE]~~
 
 **문제**: 데이터 소스/참고문헌 검증 실패 시 "AI Suggestions (Not Verified - Use with Caution)" 텍스트만 표시. 학생이 직접 검증할 방법 안내 부족.
 
@@ -386,7 +388,7 @@ const handleBackToStep3 = () => {
 
 ---
 
-### C-15. 모바일 상세 뷰 최적화
+### C-15. 모바일 상세 뷰 최적화 ~~[DONE]~~
 
 **문제**: Step 2의 점수 표시(Importance, Frequency, Total)가 3열로 배치되어 작은 화면에서 좁음. Step 4의 복잡한 섹션들이 모바일에서 읽기 불편할 수 있음.
 
