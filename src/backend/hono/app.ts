@@ -7,6 +7,7 @@ import { registerCapstoneAuthRoutes } from '@/features/capstone-auth/backend/rou
 import { registerOpenAIRoutes } from '@/features/openai/backend/route';
 import { registerSearchRoutes } from '@/features/search/backend/route';
 import { registerSavedTopicsRoutes } from '@/features/saved-topics/backend/route';
+import { registerAdminRoutes } from '@/features/admin/backend/route';
 import type { AppEnv } from '@/backend/hono/context';
 
 let singletonApp: Hono<AppEnv> | null = null;
@@ -33,6 +34,7 @@ export const createHonoApp = () => {
   registerOpenAIRoutes(app);
   registerSearchRoutes(app);
   registerSavedTopicsRoutes(app);
+  registerAdminRoutes(app);
 
   singletonApp = app;
 

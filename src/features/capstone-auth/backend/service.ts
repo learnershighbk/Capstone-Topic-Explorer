@@ -8,6 +8,7 @@ interface StudentRecord {
   student_id: string;
   created_at: string;
   last_login_at: string;
+  role: string;
 }
 
 export async function loginStudent(
@@ -51,5 +52,6 @@ export async function loginStudent(
     studentId,
     isNewUser,
     lastLoginAt: new Date().toISOString(),
+    role: existingStudent?.role ?? 'student',
   });
 }

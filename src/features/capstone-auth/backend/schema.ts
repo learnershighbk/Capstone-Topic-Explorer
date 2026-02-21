@@ -11,11 +11,13 @@ export const loginResponseSchema = z.object({
   studentId: z.string(),
   isNewUser: z.boolean(),
   lastLoginAt: z.string(),
+  role: z.string(),
 });
 
 export const sessionResponseSchema = z.object({
   isLoggedIn: z.boolean(),
   studentId: z.string().nullable(),
+  role: z.string().nullable(),
 });
 
 export const logoutResponseSchema = z.object({

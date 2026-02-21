@@ -2,16 +2,28 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth, LoginModal } from '@/features/capstone-auth';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useStepStore } from '@/features/explorer/stores/use-step-store';
 
 export function Header() {
-  const { isLoggedIn, studentId, isLoading, logout } = useAuth();
+  const { isLoggedIn, studentId, role, isLoading, logout } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const pathname = usePathname();
+  const resetAll = useStepStore((s) => s.resetAll);
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      resetAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -26,6 +38,7 @@ export function Header() {
           <div className="flex items-center justify-between">
             <Link
               href="/"
+              onClick={handleLogoClick}
               className="text-xl font-bold text-gray-900 transition-colors hover:text-[#615EEB] lg:text-2xl"
             >
               Capstone Topic Explorer
@@ -39,6 +52,14 @@ export function Header() {
                   <span className="hidden text-sm text-gray-600 sm:inline">
                     Student ID: <span className="font-medium text-gray-900">{studentId}</span>
                   </span>
+                  {role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:border-amber-400 hover:bg-amber-100"
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <Link
                     href="/my-page"
                     className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-[#615EEB] hover:bg-[#615EEB]/5 hover:text-[#615EEB]"

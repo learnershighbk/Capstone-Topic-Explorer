@@ -12,6 +12,7 @@ const SESSION_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
 interface SessionData {
   studentId: string;
+  role: string;
   createdAt: number;
   expiresAt: number;
 }
@@ -46,6 +47,7 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
     if (result.ok) {
       const sessionData: SessionData = {
         studentId,
+        role: result.data.role,
         createdAt: Date.now(),
         expiresAt: Date.now() + SESSION_EXPIRY_SECONDS * 1000,
       };
@@ -82,7 +84,7 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
     const sessionCookie = getCookie(c, SESSION_COOKIE_NAME);
 
     if (!sessionCookie) {
-      return c.json({ isLoggedIn: false, studentId: null });
+      return c.json({ isLoggedIn: false, studentId: null, role: null });
     }
 
     try {
@@ -90,13 +92,13 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
 
       if (session.expiresAt < Date.now()) {
         deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
-        return c.json({ isLoggedIn: false, studentId: null });
+        return c.json({ isLoggedIn: false, studentId: null, role: null });
       }
 
-      return c.json({ isLoggedIn: true, studentId: session.studentId });
+      return c.json({ isLoggedIn: true, studentId: session.studentId, role: session.role ?? 'student' });
     } catch {
       deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
-      return c.json({ isLoggedIn: false, studentId: null });
+      return c.json({ isLoggedIn: false, studentId: null, role: null });
     }
   });
 }
@@ -105,13 +107,13 @@ export function getSessionFromCookie(cookieValue: string | undefined): SessionDa
   if (!cookieValue) return null;
 
   try {
-    const session: SessionData = JSON.parse(cookieValue);
+    const session = JSON.parse(cookieValue) as SessionData;
 
     if (session.expiresAt < Date.now()) {
       return null;
     }
 
-    return session;
+    return { ...session, role: session.role ?? 'student' };
   } catch {
     return null;
   }

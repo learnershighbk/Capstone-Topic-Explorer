@@ -1,0 +1,7 @@
+export const ADMIN_ERROR_CODES = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  DATABASE_ERROR: 'DATABASE_ERROR',
+} as const;
+
+export type AdminErrorCode = (typeof ADMIN_ERROR_CODES)[keyof typeof ADMIN_ERROR_CODES];
