@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Capstone Topic Explorer",
-  description: "AI-powered research topic discovery for GKS scholars",
+  description: "AI-powered research topic discovery for KDI School students",
 };
 
 export default async function RootLayout({
