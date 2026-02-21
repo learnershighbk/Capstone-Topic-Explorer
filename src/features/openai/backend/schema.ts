@@ -8,6 +8,7 @@ export const issuesRequestSchema = z.object({
 
 export const policyIssueSchema = z.object({
   issue: z.string(),
+  description: z.string(),
   importance_score: z.number(),
   frequency_score: z.number(),
   total_score: z.number(),
@@ -26,6 +27,7 @@ export const topicsRequestSchema = z.object({
 
 export const topicSchema = z.object({
   title: z.string(),
+  description: z.string(),
 });
 
 export const topicsResponseSchema = z.object({

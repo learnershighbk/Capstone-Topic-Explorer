@@ -4,6 +4,7 @@ import Providers from "./providers";
 import { loadCurrentUser } from "@/features/auth/server/load-current-user";
 import { CurrentUserProvider } from "@/features/auth/context/current-user-context";
 import { CapstoneAuthProvider } from "@/features/capstone-auth";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Capstone Topic Explorer",
@@ -24,6 +25,7 @@ export default async function RootLayout({
           <CurrentUserProvider initialState={currentUser}>
             <CapstoneAuthProvider>
               {children}
+              <Toaster />
             </CapstoneAuthProvider>
           </CurrentUserProvider>
         </Providers>

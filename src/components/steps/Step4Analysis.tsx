@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import Link from 'next/link';
+import { Copy, Check, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/common/Loader';
 import { ImportantNotice } from '@/components/common/ImportantNotice';
 import { useAuth, LoginModal } from '@/features/capstone-auth';
+import { formatAnalysisAsText } from '@/features/explorer/lib/format-analysis-text';
 import type {
   PolicyIssue,
   Topic,
@@ -49,14 +52,37 @@ export function Step4Analysis({
   const { isLoggedIn } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const isSavingRef = useRef(false);
+
+  const handleCopyToClipboard = useCallback(async () => {
+    const text = formatAnalysisAsText({
+      topicTitle: selectedTopic.title,
+      country,
+      issue: selectedIssue.issue,
+      interest,
+      analysis,
+      verifiedDataSources,
+      verifiedReferences,
+    });
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [country, interest, selectedIssue, selectedTopic, analysis, verifiedDataSources, verifiedReferences]);
 
   const handleSave = async () => {
     if (!isLoggedIn) {
       setIsLoginModalOpen(true);
       return;
     }
-    await onSave();
-    setSaveSuccess(true);
+    if (isSavingRef.current || saveSuccess) return;
+    isSavingRef.current = true;
+    try {
+      await onSave();
+      setSaveSuccess(true);
+    } finally {
+      isSavingRef.current = false;
+    }
   };
 
   const googleScholarUrl = (query: string) =>
@@ -73,8 +99,8 @@ export function Step4Analysis({
   const researchQuery = `${selectedTopic.title} ${country} research`;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">
+    <div className="bg-white rounded-lg shadow-md px-4 py-5 md:p-8">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
         Step 4: Detailed Topic Analysis
       </h2>
 
@@ -88,7 +114,7 @@ export function Step4Analysis({
 
       {/* Rationale */}
       <section className="mb-6">
-        <h4 className="text-xl font-semibold border-b pb-2 mb-3">Rationale</h4>
+        <h4 className="text-lg md:text-xl font-semibold border-b pb-2 mb-3">Rationale</h4>
         <div className="space-y-4">
           <div>
             <h5 className="font-medium text-blue-600">Relevance</h5>
@@ -107,7 +133,7 @@ export function Step4Analysis({
 
       {/* Key Policy Questions */}
       <section className="mb-6">
-        <h4 className="text-xl font-semibold border-b pb-2 mb-3">
+        <h4 className="text-lg md:text-xl font-semibold border-b pb-2 mb-3">
           Key Policy Questions
         </h4>
         <ul className="space-y-2">
@@ -132,7 +158,7 @@ export function Step4Analysis({
 
       {/* Recommended Methodologies */}
       <section className="mb-6">
-        <h4 className="text-xl font-semibold border-b pb-2 mb-3">
+        <h4 className="text-lg md:text-xl font-semibold border-b pb-2 mb-3">
           Recommended Methodologies
         </h4>
         <div className="space-y-3">
@@ -147,7 +173,7 @@ export function Step4Analysis({
 
       {/* Potential Data Sources */}
       <section className="mb-6">
-        <h4 className="text-xl font-semibold border-b pb-2 mb-3 flex items-center gap-2">
+        <h4 className="text-lg md:text-xl font-semibold border-b pb-2 mb-3 flex items-center gap-2">
           Potential Data Sources
           {isVerifying && (
             <span className="text-sm font-normal text-gray-500">
@@ -197,9 +223,23 @@ export function Step4Analysis({
                 <p className="text-sm text-yellow-700 font-medium mb-2">
                   AI Suggestions (Not Verified - Use with Caution)
                 </p>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <p className="text-xs text-yellow-600 mb-3">
+                  These sources were suggested by AI but could not be automatically verified. Click the search icon to verify manually.
+                </p>
+                <ul className="text-sm text-gray-600 space-y-2">
                   {unverifiedDataSources.map((s, i) => (
-                    <li key={i}>&#8226; {s}</li>
+                    <li key={i} className="flex items-center gap-2">
+                      <span>&#8226; {s}</span>
+                      <a
+                        href={googleScholarUrl(s)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 shrink-0"
+                        title="Search on Google Scholar"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </a>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -210,7 +250,7 @@ export function Step4Analysis({
 
       {/* Key References */}
       <section className="mb-6">
-        <h4 className="text-xl font-semibold border-b pb-2 mb-3 flex items-center gap-2">
+        <h4 className="text-lg md:text-xl font-semibold border-b pb-2 mb-3 flex items-center gap-2">
           Key References
           {isVerifying && (
             <span className="text-sm font-normal text-gray-500">
@@ -268,9 +308,23 @@ export function Step4Analysis({
                 <p className="text-sm text-yellow-700 font-medium mb-2">
                   AI Suggestions (Not Verified - Use with Caution)
                 </p>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <p className="text-xs text-yellow-600 mb-3">
+                  These references were suggested by AI but could not be automatically verified. Click the search icon to verify manually.
+                </p>
+                <ul className="text-sm text-gray-600 space-y-2">
                   {unverifiedReferences.map((r, i) => (
-                    <li key={i}>&#8226; {r}</li>
+                    <li key={i} className="flex items-center gap-2">
+                      <span>&#8226; {r}</span>
+                      <a
+                        href={googleScholarUrl(r)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 shrink-0"
+                        title="Search on Google Scholar"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </a>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -281,15 +335,15 @@ export function Step4Analysis({
 
       {/* External Links */}
       <section className="mb-6">
-        <h4 className="text-xl font-semibold border-b pb-2 mb-3">
+        <h4 className="text-lg md:text-xl font-semibold border-b pb-2 mb-3">
           External Research Links
         </h4>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-3">
           <a
             href={googleScholarUrl(researchQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+            className="px-3 py-2 text-center text-sm md:text-base bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
           >
             Google Scholar
           </a>
@@ -297,7 +351,7 @@ export function Step4Analysis({
             href={perplexityUrl(researchQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
+            className="px-3 py-2 text-center text-sm md:text-base bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
           >
             Perplexity AI
           </a>
@@ -305,7 +359,7 @@ export function Step4Analysis({
             href={geminiUrl(researchQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
+            className="px-3 py-2 text-center text-sm md:text-base bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
           >
             Gemini
           </a>
@@ -313,7 +367,7 @@ export function Step4Analysis({
             href={chatgptUrl(researchQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition"
+            className="px-3 py-2 text-center text-sm md:text-base bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition"
           >
             ChatGPT
           </a>
@@ -321,18 +375,45 @@ export function Step4Analysis({
             href={claudeUrl(researchQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition"
+            className="px-3 py-2 text-center text-sm md:text-base bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition"
           >
             Claude
           </a>
         </div>
       </section>
 
+      {/* Copy to Clipboard */}
+      <div className="mb-6">
+        <Button
+          variant="outline"
+          onClick={handleCopyToClipboard}
+          className="flex items-center gap-2"
+        >
+          {copied ? (
+            <>
+              <Check className="h-4 w-4 text-green-600" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4" />
+              Copy Analysis to Clipboard
+            </>
+          )}
+        </Button>
+      </div>
+
       {/* Save Button */}
       {saveSuccess ? (
         <ImportantNotice type="success">
           <p>
-            <strong>Success!</strong> Your analysis has been saved to My Page.
+            <strong>Success!</strong> Your analysis has been saved.{' '}
+            <Link
+              href="/my-page"
+              className="underline font-semibold hover:opacity-80"
+            >
+              View on My Page
+            </Link>
           </p>
         </ImportantNotice>
       ) : (

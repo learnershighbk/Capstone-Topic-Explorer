@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Copy, Check } from 'lucide-react';
 import { Header } from '@/components/common/Header';
 import { Loader } from '@/components/common/Loader';
 import { ImportantNotice } from '@/components/common/ImportantNotice';
 import { Button } from '@/components/ui/button';
 import { useAuth, LoginModal } from '@/features/capstone-auth';
 import { apiClient } from '@/lib/remote/api-client';
+import { toast } from '@/hooks/use-toast';
+import { formatAnalysisAsText } from '@/features/explorer/lib/format-analysis-text';
 import type { SavedAnalysis, VerifiedDataSource, VerifiedReference } from '@/types';
 import { format } from 'date-fns';
 
@@ -24,6 +27,7 @@ export default function AnalysisDetailPage({ params }: PageProps) {
   const [analysis, setAnalysis] = useState<SavedAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const fetchAnalysis = useCallback(async () => {
     setIsLoading(true);
@@ -60,9 +64,31 @@ export default function AnalysisDetailPage({ params }: PageProps) {
       router.push('/my-page');
     } catch (err) {
       console.error('Failed to delete analysis:', err);
-      alert('Failed to delete analysis. Please try again.');
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete analysis. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
+
+  const handleCopyToClipboard = useCallback(async () => {
+    if (!analysis) return;
+    const vds = (analysis.verified_data_sources || []) as VerifiedDataSource[];
+    const vr = (analysis.verified_references || []) as VerifiedReference[];
+    const text = formatAnalysisAsText({
+      topicTitle: analysis.topic_title,
+      country: analysis.country,
+      issue: analysis.selected_issue,
+      interest: analysis.interest,
+      analysis: analysis.analysis_data,
+      verifiedDataSources: vds,
+      verifiedReferences: vr,
+    });
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [analysis]);
 
   const googleScholarUrl = (query: string) =>
     `https://scholar.google.com/scholar?q=${encodeURIComponent(query)}`;
@@ -136,13 +162,32 @@ export default function AnalysisDetailPage({ params }: PageProps) {
           <Link href="/my-page">
             <Button variant="outline">Back to My Page</Button>
           </Link>
-          <Button
-            variant="outline"
-            className="text-red-600 border-red-600 hover:bg-red-50"
-            onClick={handleDelete}
-          >
-            Delete Analysis
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCopyToClipboard}
+              className="flex items-center gap-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 text-green-600" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+              onClick={handleDelete}
+            >
+              Delete Analysis
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">

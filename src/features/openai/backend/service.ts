@@ -100,15 +100,17 @@ export async function generatePolicyIssues(
 
 For each policy issue, provide:
 1. A clear, concise issue title
-2. An importance score (1-10) based on policy relevance and urgency
-3. A frequency score (1-10) based on how often this topic appears in academic and policy discussions
-4. A total score (sum of importance and frequency)
+2. A brief description (1-2 sentences) explaining the issue
+3. An importance score (1-10) based on policy relevance and urgency
+4. A frequency score (1-10) based on how often this topic appears in academic and policy discussions
+5. A total score (sum of importance and frequency)
 
 Return your response as a JSON object with the following structure:
 {
   "policy_issues": [
     {
       "issue": "Issue title here",
+      "description": "A brief 1-2 sentence explanation of this policy issue and why it matters.",
       "importance_score": 8.5,
       "frequency_score": 7.0,
       "total_score": 15.5
@@ -152,7 +154,10 @@ export async function generateTopics(
 Return your response as a JSON object with the following structure:
 {
   "topics": [
-    { "title": "Specific research topic title here" }
+    {
+      "title": "Specific research topic title here",
+      "description": "A brief 1-2 sentence explanation of this topic and the research angle."
+    }
   ]
 }
 

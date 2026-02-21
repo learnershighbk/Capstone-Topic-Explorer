@@ -27,6 +27,7 @@ export interface LoginResponse {
 // Policy Issue types
 export interface PolicyIssue {
   issue: string;
+  description: string;
   importance_score: number;
   frequency_score: number;
   total_score: number;
@@ -35,6 +36,7 @@ export interface PolicyIssue {
 // Topic types
 export interface Topic {
   title: string;
+  description: string;
 }
 
 // Analysis types

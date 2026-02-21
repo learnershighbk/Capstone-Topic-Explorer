@@ -6,6 +6,7 @@ import { ImportantNotice } from '@/components/common/ImportantNotice';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { LoginModal } from '@/features/capstone-auth';
 
 interface Step1ScopeProps {
   country: string;
@@ -27,8 +28,13 @@ export function Step1Scope({
   isLoggedIn,
 }: Step1ScopeProps) {
   const [error, setError] = useState('');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const handleSubmit = () => {
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
     if (!country) {
       setError('Please select a country');
       return;
@@ -44,71 +50,91 @@ export function Step1Scope({
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
       <h2 className="mb-6 text-2xl font-bold text-gray-900">
-        Step 1: 프로젝트 범위 정의
+        Step 1: Define Your Project Scope
       </h2>
+
+      {!isLoggedIn && (
+        <div className="mb-4">
+          <ImportantNotice type="warning">
+            <p>
+              <strong>Login Required:</strong> You need to log in to generate policy issues.{' '}
+              <button
+                type="button"
+                onClick={() => setIsLoginModalOpen(true)}
+                className="underline font-semibold hover:opacity-80"
+              >
+                Click here to log in
+              </button>
+            </p>
+          </ImportantNotice>
+        </div>
+      )}
 
       <ImportantNotice type="info">
         <p>
-          <strong>KDI School 학생:</strong> 관심 있는 국가를 선택하고 연구 분야를
-          설명해주세요. 이를 바탕으로 관련 정책 이슈와 캡스톤 주제를 생성합니다.
+          <strong>KDI School Students:</strong> Select a country of interest and describe
+          your research area. We will generate relevant policy issues and capstone topics
+          based on your input.
         </p>
       </ImportantNotice>
 
       <div className="mt-6 space-y-6">
         <div>
           <Label htmlFor="country" className="mb-2 block text-lg font-semibold text-gray-900">
-            관심 국가
+            Country of Interest
           </Label>
           <CountrySelect
             value={country}
             onChange={onCountryChange}
-            placeholder="국가를 선택하세요 (대한민국이 상단에 표시됩니다)"
+            placeholder="Select a country"
           />
           <p className="mt-1 text-sm text-gray-500">
-            UN 회원국 193개국 중에서 선택 가능합니다
+            Choose from 193 UN member states
           </p>
         </div>
 
         <div>
           <Label htmlFor="interest" className="mb-2 block text-lg font-semibold text-gray-900">
-            관심 분야
+            Area of Interest
           </Label>
           <Textarea
             id="interest"
             value={interest}
             onChange={(e) => onInterestChange(e.target.value)}
-            placeholder="예: 디지털 헬스케어, 지속가능한 에너지 정책, 교육 개혁, 도시 개발..."
+            placeholder="e.g., Digital Healthcare, Sustainable Energy Policy, Education Reform, Urban Development..."
             className="min-h-[120px] border-gray-300 focus:border-[#615EEB] focus:ring-[#615EEB]"
           />
           <p className="mt-1 text-sm text-gray-500">
-            더 나은 주제 제안을 위해 연구 관심사를 구체적으로 작성해주세요
+            Be specific about your research interest for better topic suggestions
           </p>
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <div className="flex flex-col items-end gap-2 pt-4">
-          {!isLoggedIn && (
-            <p className="text-sm text-amber-600">
-              정책 이슈를 생성하려면 로그인이 필요합니다
-            </p>
-          )}
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !country || !interest.trim() || !isLoggedIn}
+            disabled={isLoading || !country || !interest.trim()}
             className="rounded-full bg-[#615EEB] px-8 py-3 text-white transition-all hover:bg-[#5250d9] hover:shadow-md disabled:bg-gray-300 disabled:hover:bg-gray-300"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                정책 이슈 생성 중...
+                Generating Policy Issues...
               </span>
+            ) : !isLoggedIn ? (
+              'Log in to Generate Issues'
             ) : (
-              '정책 이슈 생성하기'
+              'Generate Policy Issues'
             )}
           </Button>
         </div>
       </div>
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { UN_COUNTRIES, searchCountries } from '@/data/un-countries';
+import type { Country } from '@/types';
 
 interface CountrySelectProps {
   value: string;
@@ -38,6 +39,42 @@ export function CountrySelect({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const renderCountryItem = (country: Country) => (
+    <div
+      key={country.code}
+      className={`px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center justify-between ${
+        country.name === value ? 'bg-blue-100' : ''
+      }`}
+      onClick={() => {
+        onChange(country.name);
+        setIsOpen(false);
+        setSearchQuery('');
+      }}
+    >
+      <div>
+        <span>{country.name}</span>
+        {country.nameKo && (
+          <span className="ml-2 text-gray-400 text-sm">
+            ({country.nameKo})
+          </span>
+        )}
+      </div>
+      {country.name === value && (
+        <svg
+          className="w-5 h-5 text-blue-600"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      )}
+    </div>
+  );
 
   return (
     <div className="relative" ref={containerRef}>
@@ -83,55 +120,11 @@ export function CountrySelect({
                 No countries found
               </div>
             ) : (
-              filteredCountries.map((country, index) => {
-                const isFirstAndNotSearching = index === 0 && !searchQuery;
-                return (
-                  <div
-                    key={country.code}
-                    className={`px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center justify-between ${
-                      country.name === value ? 'bg-blue-100' : ''
-                    } ${isFirstAndNotSearching ? 'border-b-2 border-blue-200' : ''}`}
-                    onClick={() => {
-                      onChange(country.name);
-                      setIsOpen(false);
-                      setSearchQuery('');
-                    }}
-                  >
-                    <div>
-                      <span
-                        className={
-                          isFirstAndNotSearching ? 'font-semibold' : ''
-                        }
-                      >
-                        {country.name}
-                      </span>
-                      {country.nameKo && (
-                        <span className="ml-2 text-gray-400 text-sm">
-                          ({country.nameKo})
-                        </span>
-                      )}
-                    </div>
-                    {isFirstAndNotSearching && (
-                      <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded">
-                        Priority
-                      </span>
-                    )}
-                    {country.name === value && (
-                      <svg
-                        className="w-5 h-5 text-blue-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                );
-              })
+              <>
+                {filteredCountries.map((country) =>
+                  renderCountryItem(country)
+                )}
+              </>
             )}
           </div>
         </div>

@@ -53,9 +53,9 @@ export function Step3Topics({
                 : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <span
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 ${
                   selectedTopic?.title === topic.title
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-200 text-gray-600'
@@ -63,7 +63,12 @@ export function Step3Topics({
               >
                 {index + 1}
               </span>
-              <h3 className="font-medium text-gray-800">{topic.title}</h3>
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-800">{topic.title}</h3>
+                {topic.description && (
+                  <p className="text-sm text-gray-500 mt-1">{topic.description}</p>
+                )}
+              </div>
             </div>
           </div>
         ))}

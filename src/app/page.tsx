@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { Header, ProgressBar, FullPageLoader, HeroSection } from '@/components/common';
+import { Header, ProgressBar, HeroSection } from '@/components/common';
 import { Step1Scope, Step2Issues, Step3Topics, Step4Analysis } from '@/components/steps';
+import { AnalysisProgressLoader } from '@/components/common/AnalysisProgressLoader';
 import { useAuth } from '@/features/capstone-auth';
-import { apiClient } from '@/lib/remote/api-client';
+import { useStepStore } from '@/features/explorer/stores/use-step-store';
+import { apiClient, isAxiosError } from '@/lib/remote/api-client';
+import { toast } from '@/hooks/use-toast';
 import type {
   PolicyIssue,
   Topic,
@@ -13,35 +16,86 @@ import type {
   VerifiedReference,
 } from '@/types';
 
+type AnalysisPhase = 'generating' | 'verifying-sources' | 'done';
+
+function getErrorToast(error: unknown) {
+  if (isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status === 429) {
+      return {
+        title: 'Too Many Requests',
+        description: 'Please wait a moment and try again.',
+        variant: 'destructive' as const,
+      };
+    }
+    if (status && status >= 500) {
+      return {
+        title: 'Server Error',
+        description: 'A server error occurred. Please try again later.',
+        variant: 'destructive' as const,
+      };
+    }
+  }
+  if (error instanceof Error && error.message === 'Network Error') {
+    return {
+      title: 'Network Error',
+      description: 'Please check your internet connection.',
+      variant: 'destructive' as const,
+    };
+  }
+  return {
+    title: 'Error',
+    description: 'An error occurred. Please try again.',
+    variant: 'destructive' as const,
+  };
+}
+
 export default function HomePage() {
   const { isLoggedIn } = useAuth();
   const formSectionRef = useRef<HTMLDivElement>(null);
-  // Step state
-  const [currentStep, setCurrentStep] = useState(1);
-  const [showHero, setShowHero] = useState(true);
 
-  // Form data
-  const [country, setCountry] = useState('');
-  const [interest, setInterest] = useState('');
-  const [issues, setIssues] = useState<PolicyIssue[]>([]);
-  const [selectedIssue, setSelectedIssue] = useState<PolicyIssue | null>(null);
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  // Persistent state from zustand store
+  const {
+    currentStep,
+    setCurrentStep,
+    showHero,
+    setShowHero,
+    country,
+    setCountry,
+    interest,
+    setInterest,
+    issues,
+    setIssues,
+    selectedIssue,
+    setSelectedIssue,
+    topics,
+    setTopics,
+    addTopics,
+    selectedTopic,
+    setSelectedTopic,
+    analysis,
+    setAnalysis,
+    verifiedDataSources,
+    setVerifiedDataSources,
+    verifiedReferences,
+    setVerifiedReferences,
+    unverifiedDataSources,
+    setUnverifiedDataSources,
+    unverifiedReferences,
+    setUnverifiedReferences,
+    resetAll,
+    cacheAnalysis,
+    getCachedAnalysis,
+  } = useStepStore();
 
-  // Verified data
-  const [verifiedDataSources, setVerifiedDataSources] = useState<VerifiedDataSource[]>([]);
-  const [verifiedReferences, setVerifiedReferences] = useState<VerifiedReference[]>([]);
-  const [unverifiedDataSources, setUnverifiedDataSources] = useState<string[]>([]);
-  const [unverifiedReferences, setUnverifiedReferences] = useState<string[]>([]);
-
-  // Loading states
+  // Transient loading states (not persisted)
   const [isLoadingIssues, setIsLoadingIssues] = useState(false);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>('done');
 
   // Step 1 -> Step 2: Generate issues
   const handleGenerateIssues = useCallback(async () => {
@@ -55,11 +109,11 @@ export default function HomePage() {
       setCurrentStep(2);
     } catch (error) {
       console.error('Failed to generate issues:', error);
-      alert('Failed to generate policy issues. Please try again.');
+      toast(getErrorToast(error));
     } finally {
       setIsLoadingIssues(false);
     }
-  }, [country, interest]);
+  }, [country, interest, setIssues, setCurrentStep]);
 
   // Step 2 -> Step 3: Generate topics
   const handleGenerateTopics = useCallback(async () => {
@@ -75,11 +129,11 @@ export default function HomePage() {
       setCurrentStep(3);
     } catch (error) {
       console.error('Failed to generate topics:', error);
-      alert('Failed to generate topics. Please try again.');
+      toast(getErrorToast(error));
     } finally {
       setIsLoadingTopics(false);
     }
-  }, [country, selectedIssue]);
+  }, [country, selectedIssue, setTopics, setCurrentStep]);
 
   // Generate more topics
   const handleGenerateMoreTopics = useCallback(async () => {
@@ -92,20 +146,33 @@ export default function HomePage() {
         '/api/openai/topics',
         { country, issue: selectedIssue.issue, existingTopics }
       );
-      setTopics((prev) => [...prev, ...data.topics]);
+      addTopics(data.topics);
     } catch (error) {
       console.error('Failed to generate more topics:', error);
-      alert('Failed to generate more topics. Please try again.');
+      toast(getErrorToast(error));
     } finally {
       setIsGeneratingMore(false);
     }
-  }, [country, selectedIssue, topics]);
+  }, [country, selectedIssue, topics, addTopics]);
 
   // Step 3 -> Step 4: Generate analysis
   const handleGenerateAnalysis = useCallback(async () => {
     if (!selectedIssue || !selectedTopic) return;
 
+    // Check cache first
+    const cached = getCachedAnalysis(selectedTopic.title);
+    if (cached) {
+      setAnalysis(cached.analysis);
+      setVerifiedDataSources(cached.verifiedDataSources);
+      setVerifiedReferences(cached.verifiedReferences);
+      setUnverifiedDataSources(cached.unverifiedDataSources);
+      setUnverifiedReferences(cached.unverifiedReferences);
+      setCurrentStep(4);
+      return;
+    }
+
     setIsLoadingAnalysis(true);
+    setAnalysisPhase('generating');
     try {
       const { data } = await apiClient.post<AnalysisData>('/api/openai/analysis', {
         country,
@@ -116,6 +183,7 @@ export default function HomePage() {
       setCurrentStep(4);
 
       // Start verification after analysis is loaded
+      setAnalysisPhase('verifying-sources');
       setIsVerifying(true);
       try {
         const [dataSourcesRes, referencesRes] = await Promise.all([
@@ -142,19 +210,31 @@ export default function HomePage() {
         setVerifiedReferences(referencesRes.data.verified_references);
         setUnverifiedReferences(referencesRes.data.unverified_suggestions);
       } catch {
-        // If verification fails, show AI suggestions as unverified
         setUnverifiedDataSources(data.data_sources);
         setUnverifiedReferences(data.key_references);
       } finally {
         setIsVerifying(false);
+        setAnalysisPhase('done');
       }
     } catch (error) {
       console.error('Failed to generate analysis:', error);
-      alert('Failed to generate analysis. Please try again.');
+      toast(getErrorToast(error));
+      setAnalysisPhase('done');
     } finally {
       setIsLoadingAnalysis(false);
     }
-  }, [country, selectedIssue, selectedTopic]);
+  }, [
+    country,
+    selectedIssue,
+    selectedTopic,
+    getCachedAnalysis,
+    setAnalysis,
+    setCurrentStep,
+    setVerifiedDataSources,
+    setUnverifiedDataSources,
+    setVerifiedReferences,
+    setUnverifiedReferences,
+  ]);
 
   // Save to My Page
   const handleSave = useCallback(async () => {
@@ -175,36 +255,16 @@ export default function HomePage() {
       });
     } catch (error) {
       console.error('Failed to save analysis:', error);
-      alert('Failed to save analysis. Please try again.');
+      toast(getErrorToast(error));
     } finally {
       setIsSaving(false);
     }
-  }, [
-    country,
-    interest,
-    selectedIssue,
-    selectedTopic,
-    analysis,
-    verifiedDataSources,
-    verifiedReferences,
-  ]);
+  }, [country, interest, selectedIssue, selectedTopic, analysis, verifiedDataSources, verifiedReferences]);
 
   // Reset all state
   const handleReset = useCallback(() => {
-    setCurrentStep(1);
-    setShowHero(true);
-    setCountry('');
-    setInterest('');
-    setIssues([]);
-    setSelectedIssue(null);
-    setTopics([]);
-    setSelectedTopic(null);
-    setAnalysis(null);
-    setVerifiedDataSources([]);
-    setVerifiedReferences([]);
-    setUnverifiedDataSources([]);
-    setUnverifiedReferences([]);
-  }, []);
+    resetAll();
+  }, [resetAll]);
 
   // Handle get started from hero
   const handleGetStarted = useCallback(() => {
@@ -212,7 +272,7 @@ export default function HomePage() {
     setTimeout(() => {
       formSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-  }, []);
+  }, [setShowHero]);
 
   // Go back handlers
   const handleBackToStep1 = () => {
@@ -226,16 +286,23 @@ export default function HomePage() {
   };
 
   const handleBackToStep3 = () => {
+    if (selectedTopic && analysis) {
+      cacheAnalysis(selectedTopic.title);
+    }
     setCurrentStep(3);
     setAnalysis(null);
+    setVerifiedDataSources([]);
+    setVerifiedReferences([]);
+    setUnverifiedDataSources([]);
+    setUnverifiedReferences([]);
   };
 
-  // Loading overlay
+  // Loading overlay with phase progress
   if (isLoadingAnalysis) {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />
-        <FullPageLoader text="Generating detailed analysis..." />
+        <AnalysisProgressLoader phase={analysisPhase} />
       </div>
     );
   }
@@ -253,10 +320,10 @@ export default function HomePage() {
         {!showHero && currentStep === 1 && (
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              프로젝트 범위 설정
+              Define Your Project Scope
             </h2>
             <p className="text-gray-600">
-              국가와 관심사를 선택하여 시작하세요
+              Select a country and describe your area of interest to get started
             </p>
           </div>
         )}
@@ -264,9 +331,9 @@ export default function HomePage() {
         {currentStep > 1 && (
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              {currentStep === 2 && '정책 이슈 선택'}
-              {currentStep === 3 && '연구 주제 선택'}
-              {currentStep === 4 && '분석 결과'}
+              {currentStep === 2 && 'Identify Key Policy Issues'}
+              {currentStep === 3 && 'Choose Your Research Topic'}
+              {currentStep === 4 && 'Analysis Results'}
             </h2>
           </div>
         )}

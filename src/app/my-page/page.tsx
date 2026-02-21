@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/common/Header';
@@ -9,8 +9,11 @@ import { ImportantNotice } from '@/components/common/ImportantNotice';
 import { Button } from '@/components/ui/button';
 import { useAuth, LoginModal } from '@/features/capstone-auth';
 import { apiClient } from '@/lib/remote/api-client';
+import { toast } from '@/hooks/use-toast';
 import type { SavedAnalysisSummary } from '@/types';
 import { format } from 'date-fns';
+
+type SortOrder = 'newest' | 'oldest';
 
 interface SavedAnalysesResponse {
   items: SavedAnalysisSummary[];
@@ -34,6 +37,10 @@ export default function MyPage() {
     total: 0,
     totalPages: 0,
   });
+
+  // Filter / Sort
+  const [filterCountry, setFilterCountry] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -71,9 +78,34 @@ export default function MyPage() {
       setAnalyses((prev) => prev.filter((a) => a.id !== id));
     } catch (error) {
       console.error('Failed to delete analysis:', error);
-      alert('Failed to delete analysis. Please try again.');
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete analysis. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
+
+  const countryOptions = useMemo(() => {
+    const countries = [...new Set(analyses.map((a) => a.country))].sort();
+    return countries;
+  }, [analyses]);
+
+  const filteredAndSorted = useMemo(() => {
+    let result = analyses;
+
+    if (filterCountry !== 'all') {
+      result = result.filter((a) => a.country === filterCountry);
+    }
+
+    result = [...result].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [analyses, filterCountry, sortOrder]);
 
   if (authLoading) {
     return (
@@ -146,8 +178,39 @@ export default function MyPage() {
           </div>
         ) : (
           <>
+            {/* Filter & Sort Controls */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              <select
+                value={filterCountry}
+                onChange={(e) => setFilterCountry(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Countries</option>
+                {countryOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+
+              {filterCountry !== 'all' && (
+                <span className="flex items-center text-sm text-gray-500">
+                  {filteredAndSorted.length} of {analyses.length} analyses
+                </span>
+              )}
+            </div>
+
             <div className="space-y-4">
-              {analyses.map((analysis) => (
+              {filteredAndSorted.map((analysis) => (
                 <div
                   key={analysis.id}
                   className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"

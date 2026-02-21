@@ -50,11 +50,11 @@ export function Step2Issues({
                 : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
             }`}
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                       selectedIssue?.issue === issue.issue
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-600'
@@ -64,22 +64,25 @@ export function Step2Issues({
                   </span>
                   <h3 className="font-medium text-gray-800">{issue.issue}</h3>
                 </div>
+                {issue.description && (
+                  <p className="text-sm text-gray-500 mt-1 ml-8">{issue.description}</p>
+                )}
               </div>
-              <div className="flex gap-4 text-sm shrink-0">
+              <div className="flex gap-4 text-sm shrink-0 ml-8 md:ml-0 pt-1 md:pt-0 border-t md:border-t-0 border-gray-100">
                 <div className="text-center">
-                  <div className="text-gray-500">Importance</div>
+                  <div className="text-gray-500 text-xs md:text-sm">Importance</div>
                   <div className="font-bold text-blue-600">
                     {issue.importance_score.toFixed(1)}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-gray-500">Frequency</div>
+                  <div className="text-gray-500 text-xs md:text-sm">Frequency</div>
                   <div className="font-bold text-green-600">
                     {issue.frequency_score.toFixed(1)}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-gray-500">Total</div>
+                  <div className="text-gray-500 text-xs md:text-sm">Total</div>
                   <div className="font-bold text-purple-600">
                     {issue.total_score.toFixed(1)}
                   </div>

@@ -22,7 +22,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError('');
 
     if (!/^[0-9]{9}$/.test(studentId)) {
-      setError('학번은 9자리 숫자여야 합니다.');
+      setError('Student ID must be a 9-digit number.');
       return;
     }
 
@@ -33,7 +33,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       onClose();
       setStudentId('');
     } catch {
-      setError('로그인에 실패했습니다. 다시 시도해주세요.');
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
