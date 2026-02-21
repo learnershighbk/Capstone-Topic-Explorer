@@ -85,6 +85,10 @@ export function AnalysisProgressLoader({ phase }: AnalysisProgressLoaderProps) {
         <p className="text-xs text-gray-400 text-center mt-6">
           This may take 10-30 seconds. Please do not close this page.
         </p>
+
+        <p className="text-xs text-gray-500 text-center mt-4 italic">
+          Use AI to refine your ideas, not replace your thinking. Always verify its accuracy.
+        </p>
       </div>
     </div>
   );
