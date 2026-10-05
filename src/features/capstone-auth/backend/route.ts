@@ -6,16 +6,16 @@ import { respond, success, failure } from '@/backend/http/response';
 import { loginRequestSchema } from './schema';
 import { AUTH_ERROR_CODES } from './error';
 import { loginStudent } from './service';
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_EXPIRY_SECONDS,
+  getSessionFromCookie,
+  getSessionSecret,
+  signSession,
+  type SessionData,
+} from './session';
 
-const SESSION_COOKIE_NAME = 'capstone_session';
-const SESSION_EXPIRY_SECONDS = 7 * 24 * 60 * 60; // 7 days
-
-interface SessionData {
-  studentId: string;
-  role: string;
-  createdAt: number;
-  expiresAt: number;
-}
+const LOGGED_OUT = { isLoggedIn: false, studentId: null, role: null } as const;
 
 export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
   // POST /api/auth/login
@@ -38,6 +38,16 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
       );
     }
 
+    const secret = getSessionSecret();
+
+    if (!secret) {
+      logger.error('SESSION_SECRET is missing or shorter than 32 characters');
+      return respond(
+        c,
+        failure(500, AUTH_ERROR_CODES.CONFIG_ERROR, 'Login is temporarily unavailable.')
+      );
+    }
+
     const { studentId } = parseResult.data;
 
     logger.info(`Login attempt for student: ${studentId}`);
@@ -45,14 +55,15 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
     const result = await loginStudent(supabase, studentId);
 
     if (result.ok) {
+      const now = Date.now();
       const sessionData: SessionData = {
         studentId,
         role: result.data.role,
-        createdAt: Date.now(),
-        expiresAt: Date.now() + SESSION_EXPIRY_SECONDS * 1000,
+        createdAt: now,
+        expiresAt: now + SESSION_EXPIRY_SECONDS * 1000,
       };
 
-      setCookie(c, SESSION_COOKIE_NAME, JSON.stringify(sessionData), {
+      setCookie(c, SESSION_COOKIE_NAME, signSession(sessionData, secret), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'Lax',
@@ -84,37 +95,16 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
     const sessionCookie = getCookie(c, SESSION_COOKIE_NAME);
 
     if (!sessionCookie) {
-      return c.json({ isLoggedIn: false, studentId: null, role: null });
+      return c.json(LOGGED_OUT);
     }
 
-    try {
-      const session: SessionData = JSON.parse(sessionCookie);
+    const session = getSessionFromCookie(sessionCookie);
 
-      if (session.expiresAt < Date.now()) {
-        deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
-        return c.json({ isLoggedIn: false, studentId: null, role: null });
-      }
-
-      return c.json({ isLoggedIn: true, studentId: session.studentId, role: session.role ?? 'student' });
-    } catch {
+    if (!session) {
       deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
-      return c.json({ isLoggedIn: false, studentId: null, role: null });
+      return c.json(LOGGED_OUT);
     }
+
+    return c.json({ isLoggedIn: true, studentId: session.studentId, role: session.role });
   });
-}
-
-export function getSessionFromCookie(cookieValue: string | undefined): SessionData | null {
-  if (!cookieValue) return null;
-
-  try {
-    const session = JSON.parse(cookieValue) as SessionData;
-
-    if (session.expiresAt < Date.now()) {
-      return null;
-    }
-
-    return { ...session, role: session.role ?? 'student' };
-  } catch {
-    return null;
-  }
 }

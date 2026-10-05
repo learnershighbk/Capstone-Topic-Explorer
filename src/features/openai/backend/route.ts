@@ -5,8 +5,11 @@ import { respond } from '@/backend/http/response';
 import { issuesRequestSchema, topicsRequestSchema, analysisRequestSchema } from './schema';
 import { OPENAI_ERROR_CODES } from './error';
 import { generatePolicyIssues, generateTopics, generateAnalysis } from './service';
+import { requireSession } from '@/features/capstone-auth/backend/middleware';
 
 export function registerOpenAIRoutes(app: Hono<AppEnv>) {
+  app.use('/api/openai/*', requireSession());
+
   // POST /api/openai/issues
   app.post('/api/openai/issues', async (c) => {
     const logger = getLogger(c);

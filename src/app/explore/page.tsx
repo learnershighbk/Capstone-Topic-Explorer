@@ -43,6 +43,11 @@ function getErrorToast(error: unknown) {
       description: 'AI 서비스 사용량이 소진되었습니다. 관리자에게 문의해 주세요.',
       variant: DESTRUCTIVE,
     }))
+    .with({ status: 401 }, () => ({
+      title: 'Session Expired',
+      description: '로그인이 만료되었습니다. 다시 로그인해 주세요.',
+      variant: DESTRUCTIVE,
+    }))
     .with({ code: OPENAI_ERROR_CODES.CONTENT_REFUSED }, () => ({
       title: 'Request Declined',
       description: extractApiErrorMessage(error, 'Please rephrase your input and try again.'),

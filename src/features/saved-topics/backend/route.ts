@@ -3,12 +3,13 @@ import { getCookie } from 'hono/cookie';
 import type { AppEnv } from '@/backend/hono/context';
 import { getSupabase, getLogger } from '@/backend/hono/context';
 import { respond, failure } from '@/backend/http/response';
-import { getSessionFromCookie } from '@/features/capstone-auth/backend/route';
+import {
+  SESSION_COOKIE_NAME,
+  getSessionFromCookie,
+} from '@/features/capstone-auth/backend/session';
 import { saveAnalysisRequestSchema } from './schema';
 import { SAVED_TOPICS_ERROR_CODES } from './error';
 import { getSavedAnalyses, getSavedAnalysisById, saveAnalysis, deleteAnalysis } from './service';
-
-const SESSION_COOKIE_NAME = 'capstone_session';
 
 export function registerSavedTopicsRoutes(app: Hono<AppEnv>) {
   // GET /api/saved-topics

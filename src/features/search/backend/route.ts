@@ -5,8 +5,11 @@ import { respond } from '@/backend/http/response';
 import { dataSourcesRequestSchema, referencesRequestSchema } from './schema';
 import { SEARCH_ERROR_CODES } from './error';
 import { verifyDataSources, verifyReferences } from './service';
+import { requireSession } from '@/features/capstone-auth/backend/middleware';
 
 export function registerSearchRoutes(app: Hono<AppEnv>) {
+  app.use('/api/search/*', requireSession());
+
   // POST /api/search/data-sources
   app.post('/api/search/data-sources', async (c) => {
     const logger = getLogger(c);

@@ -3,11 +3,12 @@ import { getCookie } from 'hono/cookie';
 import type { AppEnv } from '@/backend/hono/context';
 import { getSupabase, getLogger } from '@/backend/hono/context';
 import { respond, failure } from '@/backend/http/response';
-import { getSessionFromCookie } from '@/features/capstone-auth/backend/route';
+import {
+  SESSION_COOKIE_NAME,
+  getSessionFromCookie,
+} from '@/features/capstone-auth/backend/session';
 import { ADMIN_ERROR_CODES } from './error';
 import { getAdminStats, getAdminUsers, getAdminAnalyses } from './service';
-
-const SESSION_COOKIE_NAME = 'capstone_session';
 
 function requireAdmin(cookieValue: string | undefined) {
   const session = getSessionFromCookie(cookieValue);
