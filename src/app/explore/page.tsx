@@ -15,7 +15,6 @@ import {
   type DailyLimitDetails,
 } from '@/features/openai/lib/dto';
 import { toast } from '@/hooks/use-toast';
-import { formatCitation } from '@/lib/citation';
 import type {
   PolicyIssue,
   Topic,
@@ -273,7 +272,7 @@ export default function ExplorePage() {
         setUnverifiedReferences(referencesRes.data.unverified_suggestions);
       } catch {
         setUnverifiedDataSources(data.data_sources);
-        setUnverifiedReferences(data.key_references.map(formatCitation));
+        setUnverifiedReferences(data.key_references);
       } finally {
         setIsVerifying(false);
         setAnalysisPhase('done');
