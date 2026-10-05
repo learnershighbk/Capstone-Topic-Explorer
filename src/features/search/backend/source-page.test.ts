@@ -33,6 +33,9 @@ describe('sourceAcronyms', () => {
       expect.arrayContaining(['ecos', 'bokess'])
     );
     expect(sourceAcronyms('Ministry of Employment and Labor')).toContain('moel');
+    expect(sourceAcronyms('Korean Labor and Income Panel Study (KLIPS), Korea Labor Institute')).toEqual(
+      expect.arrayContaining(['klips', 'kli'])
+    );
     expect(sourceAcronyms('Statistics Korea')).toEqual([]);
   });
 });
@@ -62,6 +65,7 @@ describe('isSiteFrontPage', () => {
     expect(isSiteFrontPage('https://www.nso.gov.vn/en/homepage/')).toBe(true);
     expect(isSiteFrontPage('https://www.bps.go.id/en?lang=en')).toBe(true);
     expect(isSiteFrontPage('https://www.bok.or.kr/imerEng/main/main.do')).toBe(true);
+    expect(isSiteFrontPage('https://survey.keis.or.kr/eng/goms/index.jsp')).toBe(false);
   });
 
   it('treats dataset and report pages as specific', () => {
@@ -159,6 +163,66 @@ describe('findSourcePage', () => {
       result('Indonesia - WHO Data', 'https://data.who.int/countries/360'),
     ]);
     expect(chosen?.link).toBe('https://data.who.int/countries/360');
+  });
+
+  it("prefers the portal's statistics list over its press-release list and front page", () => {
+    const suggestion = 'Korean Statistical Information Service (KOSIS): regional labor market indicators';
+    const siteTitle = 'KOSIS KOrean Statistical Information Service';
+    const chosen = findSourcePage(suggestion, country, [
+      result(siteTitle, 'https://kosis.kr/eng/'),
+      result(siteTitle, 'https://kosis.kr/eng/bulletinBoard/pressReleasesList.do'),
+      result(siteTitle, 'https://kosis.kr/eng/statisticsList/statisticsListIndex.do?menuId=M_01_01'),
+    ]);
+    expect(chosen?.link).toBe('https://kosis.kr/eng/statisticsList/statisticsListIndex.do?menuId=M_01_01');
+  });
+
+  it("keeps a dataset's own 'About' page ahead of a third-party catalog", () => {
+    const suggestion = 'Korean Labor and Income Panel Study (KLIPS), Korea Labor Institute: longitudinal household survey';
+    const chosen = findSourcePage(suggestion, country, [
+      result('Korean Labor and Income Panel Study', 'https://atlaslongitudinaldatasets.ac.uk/datasets/klips'),
+      result('About KLIPS : 한국노동패널조사 영문', 'https://www.kli.re.kr/menu.es?mid=a50101000000'),
+    ]);
+    expect(chosen?.link).toBe('https://www.kli.re.kr/menu.es?mid=a50101000000');
+  });
+
+  it('prefers the data page over a board attachment and a PDF report on the same site', () => {
+    const klips = 'Korean Labor and Income Panel Study (KLIPS), Korea Labor Institute: longitudinal household survey';
+    expect(
+      findSourcePage(klips, country, [
+        result('KLIPS User Guide', 'https://www.kli.re.kr/boardDownload.es?bid=0055&list_no=102610&seq=10861'),
+        result('About KLIPS : 한국노동패널조사 영문', 'https://www.kli.re.kr/menu.es?mid=a50101000000'),
+      ])?.link
+    ).toBe('https://www.kli.re.kr/menu.es?mid=a50101000000');
+
+    const youngLives = 'Young Lives Ethiopia: longitudinal child and household data';
+    expect(
+      findSourcePage(youngLives, 'Ethiopia', [
+        result('Young Lives Ethiopia Lessons from Longitudinal Research', 'https://www.younglives.org.uk/sites/default/files/Ethiopia-Report.pdf'),
+        result('Data | Young Lives', 'https://www.younglives.org.uk/data'),
+      ])?.link
+    ).toBe('https://www.younglives.org.uk/data');
+  });
+
+  it("ranks a president's greeting page no higher than the front page", () => {
+    const suggestion = 'Korea Employment Information Service (KEIS) Employment Insurance Database: administrative records';
+    const chosen = findSourcePage(suggestion, country, [
+      result('About KEIS | KEIS President', 'https://www.keis.or.kr/keis/en/conts/306/web.do'),
+      result('Korea Employment Information Service KEIS', 'https://www.keis.or.kr/keis/en/index.do'),
+    ]);
+    expect(chosen?.link).toBe('https://www.keis.or.kr/keis/en/index.do');
+  });
+
+  it('accepts a university host for a dataset it publishes', () => {
+    const suggestion = 'CHIRPS rainfall data (Climate Hazards Group, UC Santa Barbara): gridded rainfall';
+    const chosen = findSourcePage(suggestion, 'Ethiopia', [
+      result('CHIRPS: Rainfall Estimates from Rain Gauge and Satellite Observations', 'https://www.chc.ucsb.edu/data/chirps'),
+      result('Rainfall estimates (CHIRPS)', 'https://docs.digitalearthafrica.org/en/latest/data_specs/CHIRPS_specs.html'),
+    ]);
+    expect(chosen?.link).toBe('https://www.chc.ucsb.edu/data/chirps');
+  });
+
+  it('does not mistake a catalog for the source because the acronym is in its path', () => {
+    expect(hostNamesSource('https://atlaslongitudinaldatasets.ac.uk/datasets/klips', 'Korean Labor and Income Panel Study (KLIPS)', 'South Korea')).toBe(false);
   });
 
   it('returns undefined when no result names the source', () => {

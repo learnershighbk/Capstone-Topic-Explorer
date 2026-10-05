@@ -1,4 +1,4 @@
-import { getHostname, isOfficialDataUrl, sourceNameMatches, toTitleWords } from './matching';
+import { getHostname, isAcademicUrl, isOfficialDataUrl, sourceNameMatches, toTitleWords } from './matching';
 
 /**
  * Picks the page that publishes an AI-suggested data source out of web-search results.
@@ -29,12 +29,28 @@ const LANDING_SEGMENTS = new Set([
   'en', 'eng', 'english', 'ko', 'kor', 'korean', 'id', 'home', 'homepage', 'main', 'index', 'default',
   'portal', 'web', 'site', 'front', 'intro',
 ]);
-/** A last segment like "main.do" marks a landing page whatever section precedes it ("/imerEng/main/main.do"). */
-const LANDING_LAST_SEGMENTS = new Set(['main', 'index', 'home', 'homepage', 'default']);
+/** Segments that only mark a language edition ("/imerEng/", "/english/"). */
+const LANGUAGE_SEGMENT_PATTERN = /^(en|ko|id)$|(eng|english|kor|korean)$/i;
 const LANDING_QUERY_KEYS = new Set(['lang', 'language', 'locale', 'hl']);
 const PAGE_EXTENSION_PATTERN = /\.(do|html?|jsp|php|aspx?|es)$/i;
 /** Servlet session ids make a link single-use and unreadable. */
 const SESSION_ID_PATTERN = /;jsessionid=[^?#]*/i;
+
+/**
+ * Pages about the institution rather than its data: a president's greeting, a press-release
+ * list, a Q&A board. "About" alone is not listed because "About KLIPS" is the dataset's page.
+ */
+const SITE_PAGE_WORDS = new Set([
+  'president', 'greeting', 'greetings', 'organization', 'organisation', 'history', 'contact',
+  'news', 'press', 'notice', 'notices', 'faq', 'qna', 'login', 'sitemap', 'privacy', 'careers', 'events',
+  'services',
+]);
+/** Board software paths ("bulletinBoard/pressReleasesList.do", "boardDownload.es") hold posts and attachments. */
+const SITE_PAGE_PATH_PATTERN = /board|bulletin|press|news|notice|qna|faq/i;
+
+/** Path words that mark a data or statistics page. */
+const DATA_PATH_PATTERN = /stat|data|survey|indicator|table|catalog|microdata|dataset/i;
+const PDF_PATTERN = /\.pdf($|[?#])/i;
 
 /**
  * Name words too common to show that a hostname belongs to the source: "statistics" appears in
@@ -47,7 +63,9 @@ const GENERIC_NAME_WORDS = new Set([
   'programme', 'portal', 'open', 'information', 'report', 'reports', 'research', 'council', 'commission',
   'authority', 'federal', 'central', 'bank', 'government', 'economic', 'health', 'labor', 'labour',
   'employment', 'study', 'panel', 'family', 'life', 'household', 'living', 'standards', 'population',
-  'general', 'basic', 'public', 'social', 'development', 'education', 'census',
+  'general', 'basic', 'public', 'social', 'development', 'education', 'census', 'longitudinal', 'ageing',
+  'aging', 'dataset', 'datasets', 'archive', 'catalog', 'repository', 'annual', 'monthly', 'quarterly',
+  'income', 'expenditure', 'poverty', 'insurance', 'statistik', 'nacional', 'instituto', 'ministerio',
 ]);
 const MIN_DISTINCTIVE_WORD_LENGTH = 5;
 const MIN_ACRONYM_LENGTH = 3;
@@ -70,9 +88,14 @@ const SCORE = {
   ownSitePage: 5,
   otherOfficialPage: 2,
   ownSiteFrontPage: 1,
+  /** A press or greeting page ranks below the front page, which at least leads to the data. */
+  ownSiteGenericPage: 0,
   titleNamesSource: 2,
   titleRelated: 1,
   titleNamesDataset: 4,
+  dataPath: 1,
+  /** A PDF is a report about the data, so a page of the same standing wins. */
+  pdfPenalty: 1,
 } as const;
 
 /**
@@ -108,11 +131,14 @@ export const isSiteFrontPage = (url: string): boolean => {
       .filter(Boolean)
       .map((segment) => segment.replace(PAGE_EXTENSION_PATTERN, '').toLowerCase());
     const onlyLanguageParams = [...searchParams.keys()].every((key) => LANDING_QUERY_KEYS.has(key.toLowerCase()));
-    const lastSegment = segments[segments.length - 1];
 
-    if (!onlyLanguageParams) return false;
-    if (lastSegment !== undefined && LANDING_LAST_SEGMENTS.has(lastSegment)) return true;
-    return segments.every((segment) => LANDING_SEGMENTS.has(segment) || hostLabels.has(segment));
+    return (
+      onlyLanguageParams &&
+      segments.every(
+        (segment) =>
+          LANDING_SEGMENTS.has(segment) || hostLabels.has(segment) || LANGUAGE_SEGMENT_PATTERN.test(segment)
+      )
+    );
   } catch {
     return false;
   }
@@ -136,20 +162,30 @@ const CONJUNCTIONS = new Set(['and', 'the']);
  * acronym ("KOSIS", "WHO") and initials in their common forms ("Bank of Korea" → "bok", "Ministry
  * of Employment and Labor" → "moel", "Korea Labor Institute" → "kli").
  */
-export const sourceAcronyms = (name: string): string[] => {
-  const parenthesized = [...name.matchAll(/\(([A-Za-z]+)\)/g)].map((match) => match[1]);
-  const withoutParens = name.replace(/\([^)]*\)/g, ' ');
+const acronymsOfPhrase = (phrase: string): string[] => {
+  const parenthesized = [...phrase.matchAll(/\(([A-Za-z]+)\)/g)].map((match) => match[1]);
+  const withoutParens = phrase.replace(/\([^)]*\)/g, ' ');
   const tokens = withoutParens.split(/[^A-Za-z]+/).filter(Boolean);
   const allCaps = tokens.filter((token) => /^[A-Z]{2,}$/.test(token));
   const contentWords = [...toTitleWords(withoutParens)];
-  const candidates = [
+
+  return [
     ...parenthesized,
     ...allCaps,
     ...leadingInitials(tokens),
     ...leadingInitials(tokens.filter((token) => !CONJUNCTIONS.has(token.toLowerCase()))),
     ...leadingInitials(contentWords),
   ].map((acronym) => acronym.toLowerCase());
+};
 
+/**
+ * Collected from the whole name and from each comma-separated part, because suggestions read
+ * "Dataset (ACR), Organization" and the organization's initials name the host ("Korea Labor
+ * Institute" → "kli.re.kr").
+ */
+export const sourceAcronyms = (name: string): string[] => {
+  const phrases = [name, ...name.split(/,\s*/)];
+  const candidates = phrases.flatMap(acronymsOfPhrase);
   return [...new Set(candidates.filter((acronym) => acronym.length >= MIN_ACRONYM_LENGTH))];
 };
 
@@ -163,7 +199,22 @@ const distinctiveNameWords = (name: string, country: string): string[] => {
   );
 };
 
-/** Whether the hostname looks like the source's own site ("kosis.kr", "who.int", "data.bps.go.id"). */
+const pathSegmentsOf = (url: string): string[] => {
+  try {
+    return new URL(url).pathname
+      .split('/')
+      .filter(Boolean)
+      .map((segment) => segment.replace(PAGE_EXTENSION_PATTERN, '').toLowerCase());
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Whether the hostname looks like the source's own site: its acronym or a distinctive name word
+ * in a host label ("kosis.kr", "who.int", "philhealth.gov.ph"). The path is not consulted: a
+ * catalog's "/datasets/klips" would otherwise pass for the source.
+ */
 export const hostNamesSource = (url: string, name: string, country: string): boolean => {
   const host = getHostname(url);
   if (!host) return false;
@@ -176,6 +227,29 @@ export const hostNamesSource = (url: string, name: string, country: string): boo
   );
 
   return acronymInHost || distinctiveNameWords(name, country).some((word) => host.includes(word));
+};
+
+/** Whether the page is about the institution itself (press releases, Q&A, greetings) or a board post. */
+const isInstitutionPage = (result: SearchResult): boolean => {
+  const segments = pathSegmentsOf(result.link);
+  return (
+    segments.some((segment) => SITE_PAGE_PATH_PATTERN.test(segment)) ||
+    [...segments, ...toTitleWords(result.title)].some((word) => SITE_PAGE_WORDS.has(word))
+  );
+};
+
+const hasDataPath = (url: string) => pathSegmentsOf(url).some((segment) => DATA_PATH_PATTERN.test(segment));
+
+/** Titles that several pages of one host share are the site's title, not a page's. */
+const findSiteTitles = (results: SearchResult[]): Set<string> => {
+  const seen = new Map<string, number>();
+  results.forEach((result) => {
+    const key = `${getHostname(result.link)}|${result.title}`;
+    seen.set(key, (seen.get(key) ?? 0) + 1);
+  });
+  return new Set(
+    [...seen.entries()].filter(([, count]) => count > 1).map(([key]) => key.slice(key.indexOf('|') + 1))
+  );
 };
 
 /**
@@ -220,25 +294,38 @@ const titleIsRelated = (suggestion: string, title: string) => {
 export const cleanSourceUrl = (url: string): string => url.replace(SESSION_ID_PATTERN, '');
 
 /**
- * How well a result stands in for the source's own page; 0 means unusable. A front page is
- * accepted only on the source's own site and only when titled by the source (a portal named
- * as a whole, "KOSIS"); any other host must be official and name the source in its title.
+ * How well a result stands in for the source's own page; 0 means unusable. The own site's front
+ * page and its pages about itself are accepted only when titled by the source and only as a last
+ * resort (a portal named as a whole, "KOSIS"); any other host must be an official or academic
+ * publisher and name the source in its title. `siteTitles` are titles shared by several pages of
+ * one host in this result set, which mark a page as generic.
  */
-export const scoreSourcePage = (suggestion: string, country: string, result: SearchResult): number => {
+export const scoreSourcePage = (
+  suggestion: string,
+  country: string,
+  result: SearchResult,
+  siteTitles: Set<string> = new Set()
+): number => {
   const host = getHostname(result.link);
   if (!host || isNonPublisherHost(host)) return 0;
 
   const parsed = parseSourceSuggestion(suggestion);
   const ownSite = hostNamesSource(result.link, parsed.name, country);
-  const frontPage = isSiteFrontPage(result.link);
+  // A page carrying the site-wide title is as unspecific as the front page.
+  const frontPage = isSiteFrontPage(result.link) || siteTitles.has(result.title);
+  const generic = frontPage || isInstitutionPage(result);
   const named = titleNames(parsed.name, result.title) || titleNames(parsed.detail, result.title);
   const datasetBonus = titleIsNamedDataset(parsed.detail, result.title) ? SCORE.titleNamesDataset : 0;
+  const pathBonus = (hasDataPath(result.link) ? SCORE.dataPath : 0) - (PDF_PATTERN.test(result.link) ? SCORE.pdfPenalty : 0);
 
-  if (ownSite && frontPage) return named ? SCORE.ownSiteFrontPage + SCORE.titleNamesSource : 0;
-  if (ownSite && named) return SCORE.ownSitePage + SCORE.titleNamesSource + datasetBonus;
-  if (ownSite && titleIsRelated(suggestion, result.title)) return SCORE.ownSitePage + SCORE.titleRelated;
-  if (!ownSite && !frontPage && named && isOfficialDataUrl(result.link)) {
-    return SCORE.otherOfficialPage + SCORE.titleNamesSource + datasetBonus;
+  if (ownSite && generic) {
+    if (!named) return 0;
+    return (frontPage ? SCORE.ownSiteFrontPage : SCORE.ownSiteGenericPage) + SCORE.titleNamesSource + pathBonus;
+  }
+  if (ownSite && named) return SCORE.ownSitePage + SCORE.titleNamesSource + datasetBonus + pathBonus;
+  if (ownSite && titleIsRelated(suggestion, result.title)) return SCORE.ownSitePage + SCORE.titleRelated + pathBonus;
+  if (!ownSite && !generic && named && (isOfficialDataUrl(result.link) || isAcademicUrl(result.link))) {
+    return SCORE.otherOfficialPage + SCORE.titleNamesSource + datasetBonus + pathBonus;
   }
   return 0;
 };
@@ -249,8 +336,9 @@ export const findSourcePage = (
   country: string,
   results: SearchResult[]
 ): SearchResult | undefined => {
+  const siteTitles = findSiteTitles(results);
   const best = results.reduce<{ result: SearchResult; score: number } | undefined>((top, result) => {
-    const score = scoreSourcePage(suggestion, country, result);
+    const score = scoreSourcePage(suggestion, country, result, siteTitles);
     return score > (top?.score ?? 0) ? { result, score } : top;
   }, undefined);
 
