@@ -414,7 +414,7 @@ export default function ExplorePage() {
   // Show nothing while checking auth
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white dark:bg-background">
         <Header />
       </div>
     );
@@ -428,7 +428,7 @@ export default function ExplorePage() {
   // Loading overlay with phase progress
   if (isLoadingAnalysis) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-background">
         <Header />
         <AnalysisProgressLoader phase={analysisPhase} />
       </div>
@@ -436,7 +436,7 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-background">
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 pt-12 pb-8">

@@ -7,6 +7,7 @@ import { useAuth, LoginModal } from '@/features/capstone-auth';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useStepStore } from '@/features/explorer/stores/use-step-store';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
   const { isLoggedIn, studentId, role, isLoading, logout } = useAuth();
@@ -48,6 +49,7 @@ export function Header() {
             </Link>
 
             <nav className="flex items-center gap-3 lg:gap-4">
+              <ThemeToggle />
               {isLoading ? (
                 <div className="h-10 w-24 animate-pulse rounded-lg bg-gray-200" />
               ) : isLoggedIn ? (

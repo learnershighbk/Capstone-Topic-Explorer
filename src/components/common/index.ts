@@ -6,3 +6,4 @@ export { Loader, FullPageLoader } from './Loader';
 export { ImportantNotice } from './ImportantNotice';
 export { AnalysisProgressLoader } from './AnalysisProgressLoader';
 export { UnverifiedList } from './UnverifiedList';
+export { ThemeToggle } from './ThemeToggle';

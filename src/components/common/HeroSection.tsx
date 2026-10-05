@@ -36,7 +36,7 @@ const FEATURE_CARDS = [
 
 export function HeroSection({ isLoggedIn, onGetStarted, onLoginSuccess }: HeroSectionProps) {
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#FFFCF1] via-white to-gray-50">
+    <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#FFFCF1] via-white to-gray-50 dark:from-background">
       <div className="relative z-10 mx-auto max-w-7xl px-4 pt-14 text-center lg:pt-16">
         {/* Headline */}
         <motion.h1

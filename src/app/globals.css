@@ -115,11 +115,11 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 222 24% 8%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 222 20% 12%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 222 20% 12%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
@@ -131,8 +131,8 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    --border: 220 14% 24%;
+    --input: 220 14% 24%;
     --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -149,4 +149,212 @@
   body {
     @apply bg-background text-foreground text-base;
   }
+}
+
+/*
+  Dark mode palette.
+
+  Components use the light Tailwind palette directly (bg-white, text-gray-900,
+  bg-amber-50 ...). Instead of adding a dark: variant to every class, the
+  palette itself is remapped under .dark: white becomes the card surface, the
+  gray scale is inverted, and light tints swap with deep shades of the same
+  hue. Mid shades (400-600), used for accents and colored buttons, keep their
+  values. Light mode is untouched.
+*/
+.dark {
+  color-scheme: dark;
+
+  --color-white: oklch(21% 0.02 264);
+  --color-gray-50: oklch(25% 0.02 264);
+  --color-gray-100: oklch(28% 0.024 260);
+  --color-gray-200: oklch(32% 0.025 260);
+  --color-gray-300: oklch(40% 0.025 260);
+  --color-gray-400: oklch(58% 0.022 261);
+  --color-gray-500: oklch(68% 0.02 264);
+  --color-gray-600: oklch(76% 0.015 257);
+  --color-gray-700: oklch(84% 0.01 260);
+  --color-gray-800: oklch(90% 0.006 257);
+  --color-gray-900: oklch(95% 0.004 264);
+  --color-gray-950: oklch(98% 0.002 260);
+
+  --color-red-50: color-mix(in oklab, oklch(25.8% 0.092 26.042) 45%, transparent);
+  --color-red-100: color-mix(in oklab, oklch(39.6% 0.141 25.723) 55%, transparent);
+  --color-red-200: oklch(44.4% 0.177 26.899);
+  --color-red-300: oklch(50.5% 0.213 27.518);
+  --color-red-700: oklch(80.8% 0.114 19.571);
+  --color-red-800: oklch(88.5% 0.062 18.334);
+  --color-red-900: oklch(93.6% 0.032 17.717);
+  --color-red-950: oklch(97.1% 0.013 17.38);
+  --color-orange-50: color-mix(in oklab, oklch(26.6% 0.079 36.259) 45%, transparent);
+  --color-orange-100: color-mix(in oklab, oklch(40.8% 0.123 38.172) 55%, transparent);
+  --color-orange-200: oklch(47% 0.157 37.304);
+  --color-orange-300: oklch(55.3% 0.195 38.402);
+  --color-orange-700: oklch(83.7% 0.128 66.29);
+  --color-orange-800: oklch(90.1% 0.076 70.697);
+  --color-orange-900: oklch(95.4% 0.038 75.164);
+  --color-orange-950: oklch(98% 0.016 73.684);
+  --color-amber-50: color-mix(in oklab, oklch(27.9% 0.077 45.635) 45%, transparent);
+  --color-amber-100: color-mix(in oklab, oklch(41.4% 0.112 45.904) 55%, transparent);
+  --color-amber-200: oklch(47.3% 0.137 46.201);
+  --color-amber-300: oklch(55.5% 0.163 48.998);
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-amber-800: oklch(92.4% 0.12 95.746);
+  --color-amber-900: oklch(96.2% 0.059 95.617);
+  --color-amber-950: oklch(98.7% 0.022 95.277);
+  --color-yellow-50: color-mix(in oklab, oklch(28.6% 0.066 53.813) 45%, transparent);
+  --color-yellow-100: color-mix(in oklab, oklch(42.1% 0.095 57.708) 55%, transparent);
+  --color-yellow-200: oklch(47.6% 0.114 61.907);
+  --color-yellow-300: oklch(55.4% 0.135 66.442);
+  --color-yellow-700: oklch(90.5% 0.182 98.111);
+  --color-yellow-800: oklch(94.5% 0.129 101.54);
+  --color-yellow-900: oklch(97.3% 0.071 103.193);
+  --color-yellow-950: oklch(98.7% 0.026 102.212);
+  --color-green-50: color-mix(in oklab, oklch(26.6% 0.065 152.934) 45%, transparent);
+  --color-green-100: color-mix(in oklab, oklch(39.3% 0.095 152.535) 55%, transparent);
+  --color-green-200: oklch(44.8% 0.119 151.328);
+  --color-green-300: oklch(52.7% 0.154 150.069);
+  --color-green-700: oklch(87.1% 0.15 154.449);
+  --color-green-800: oklch(92.5% 0.084 155.995);
+  --color-green-900: oklch(96.2% 0.044 156.743);
+  --color-green-950: oklch(98.2% 0.018 155.826);
+  --color-emerald-50: color-mix(in oklab, oklch(26.2% 0.051 172.552) 45%, transparent);
+  --color-emerald-100: color-mix(in oklab, oklch(37.8% 0.077 168.94) 55%, transparent);
+  --color-emerald-200: oklch(43.2% 0.095 166.913);
+  --color-emerald-300: oklch(50.8% 0.118 165.612);
+  --color-emerald-700: oklch(84.5% 0.143 164.978);
+  --color-emerald-800: oklch(90.5% 0.093 164.15);
+  --color-emerald-900: oklch(95% 0.052 163.051);
+  --color-emerald-950: oklch(97.9% 0.021 166.113);
+  --color-blue-50: color-mix(in oklab, oklch(28.2% 0.091 267.935) 45%, transparent);
+  --color-blue-100: color-mix(in oklab, oklch(37.9% 0.146 265.522) 55%, transparent);
+  --color-blue-200: oklch(42.4% 0.199 265.638);
+  --color-blue-300: oklch(48.8% 0.243 264.376);
+  --color-blue-700: oklch(80.9% 0.105 251.813);
+  --color-blue-800: oklch(88.2% 0.059 254.128);
+  --color-blue-900: oklch(93.2% 0.032 255.585);
+  --color-blue-950: oklch(97% 0.014 254.604);
+  --color-indigo-50: color-mix(in oklab, oklch(25.7% 0.09 281.288) 45%, transparent);
+  --color-indigo-100: color-mix(in oklab, oklch(35.9% 0.144 278.697) 55%, transparent);
+  --color-indigo-200: oklch(39.8% 0.195 277.366);
+  --color-indigo-300: oklch(45.7% 0.24 277.023);
+  --color-indigo-700: oklch(78.5% 0.115 274.713);
+  --color-indigo-800: oklch(87% 0.065 274.039);
+  --color-indigo-900: oklch(93% 0.034 272.788);
+  --color-indigo-950: oklch(96.2% 0.018 272.314);
+  --color-purple-50: color-mix(in oklab, oklch(29.1% 0.149 302.717) 45%, transparent);
+  --color-purple-100: color-mix(in oklab, oklch(38.1% 0.176 304.987) 55%, transparent);
+  --color-purple-200: oklch(43.8% 0.218 303.724);
+  --color-purple-300: oklch(49.6% 0.265 301.924);
+  --color-purple-700: oklch(82.7% 0.119 306.383);
+  --color-purple-800: oklch(90.2% 0.063 306.703);
+  --color-purple-900: oklch(94.6% 0.033 307.174);
+  --color-purple-950: oklch(97.7% 0.014 308.299);
+}
+
+/*
+  Exceptions to the remap, scoped to the element using the class:
+  - white text, spinner rings, light text, and dark backgrounds sit on colored
+    surfaces (buttons, banners), so they keep their original values;
+  - accent text (500-600) is lifted to the 400 shade to stay readable on dark.
+*/
+.dark .text-white,
+.dark .border-white {
+  --color-white: #fff;
+}
+
+.dark .text-red-50 { --color-red-50: oklch(97.1% 0.013 17.38); }
+.dark .text-red-100 { --color-red-100: oklch(93.6% 0.032 17.717); }
+.dark .text-red-200 { --color-red-200: oklch(88.5% 0.062 18.334); }
+.dark .text-red-300 { --color-red-300: oklch(80.8% 0.114 19.571); }
+.dark .text-orange-50 { --color-orange-50: oklch(98% 0.016 73.684); }
+.dark .text-orange-100 { --color-orange-100: oklch(95.4% 0.038 75.164); }
+.dark .text-orange-200 { --color-orange-200: oklch(90.1% 0.076 70.697); }
+.dark .text-orange-300 { --color-orange-300: oklch(83.7% 0.128 66.29); }
+.dark .text-amber-50 { --color-amber-50: oklch(98.7% 0.022 95.277); }
+.dark .text-amber-100 { --color-amber-100: oklch(96.2% 0.059 95.617); }
+.dark .text-amber-200 { --color-amber-200: oklch(92.4% 0.12 95.746); }
+.dark .text-amber-300 { --color-amber-300: oklch(87.9% 0.169 91.605); }
+.dark .text-yellow-50 { --color-yellow-50: oklch(98.7% 0.026 102.212); }
+.dark .text-yellow-100 { --color-yellow-100: oklch(97.3% 0.071 103.193); }
+.dark .text-yellow-200 { --color-yellow-200: oklch(94.5% 0.129 101.54); }
+.dark .text-yellow-300 { --color-yellow-300: oklch(90.5% 0.182 98.111); }
+.dark .text-green-50 { --color-green-50: oklch(98.2% 0.018 155.826); }
+.dark .text-green-100 { --color-green-100: oklch(96.2% 0.044 156.743); }
+.dark .text-green-200 { --color-green-200: oklch(92.5% 0.084 155.995); }
+.dark .text-green-300 { --color-green-300: oklch(87.1% 0.15 154.449); }
+.dark .text-emerald-50 { --color-emerald-50: oklch(97.9% 0.021 166.113); }
+.dark .text-emerald-100 { --color-emerald-100: oklch(95% 0.052 163.051); }
+.dark .text-emerald-200 { --color-emerald-200: oklch(90.5% 0.093 164.15); }
+.dark .text-emerald-300 { --color-emerald-300: oklch(84.5% 0.143 164.978); }
+.dark .text-blue-50 { --color-blue-50: oklch(97% 0.014 254.604); }
+.dark .text-blue-100 { --color-blue-100: oklch(93.2% 0.032 255.585); }
+.dark .text-blue-200 { --color-blue-200: oklch(88.2% 0.059 254.128); }
+.dark .text-blue-300 { --color-blue-300: oklch(80.9% 0.105 251.813); }
+.dark .text-indigo-50 { --color-indigo-50: oklch(96.2% 0.018 272.314); }
+.dark .text-indigo-100 { --color-indigo-100: oklch(93% 0.034 272.788); }
+.dark .text-indigo-200 { --color-indigo-200: oklch(87% 0.065 274.039); }
+.dark .text-indigo-300 { --color-indigo-300: oklch(78.5% 0.115 274.713); }
+.dark .text-purple-50 { --color-purple-50: oklch(97.7% 0.014 308.299); }
+.dark .text-purple-100 { --color-purple-100: oklch(94.6% 0.033 307.174); }
+.dark .text-purple-200 { --color-purple-200: oklch(90.2% 0.063 306.703); }
+.dark .text-purple-300 { --color-purple-300: oklch(82.7% 0.119 306.383); }
+
+.dark .bg-red-700, .dark .hover\:bg-red-700 { --color-red-700: oklch(50.5% 0.213 27.518); }
+.dark .bg-red-800, .dark .hover\:bg-red-800 { --color-red-800: oklch(44.4% 0.177 26.899); }
+.dark .bg-red-900, .dark .hover\:bg-red-900 { --color-red-900: oklch(39.6% 0.141 25.723); }
+.dark .bg-red-950, .dark .hover\:bg-red-950 { --color-red-950: oklch(25.8% 0.092 26.042); }
+.dark .bg-orange-700, .dark .hover\:bg-orange-700 { --color-orange-700: oklch(55.3% 0.195 38.402); }
+.dark .bg-orange-800, .dark .hover\:bg-orange-800 { --color-orange-800: oklch(47% 0.157 37.304); }
+.dark .bg-orange-900, .dark .hover\:bg-orange-900 { --color-orange-900: oklch(40.8% 0.123 38.172); }
+.dark .bg-orange-950, .dark .hover\:bg-orange-950 { --color-orange-950: oklch(26.6% 0.079 36.259); }
+.dark .bg-amber-700, .dark .hover\:bg-amber-700 { --color-amber-700: oklch(55.5% 0.163 48.998); }
+.dark .bg-amber-800, .dark .hover\:bg-amber-800 { --color-amber-800: oklch(47.3% 0.137 46.201); }
+.dark .bg-amber-900, .dark .hover\:bg-amber-900 { --color-amber-900: oklch(41.4% 0.112 45.904); }
+.dark .bg-amber-950, .dark .hover\:bg-amber-950 { --color-amber-950: oklch(27.9% 0.077 45.635); }
+.dark .bg-yellow-700, .dark .hover\:bg-yellow-700 { --color-yellow-700: oklch(55.4% 0.135 66.442); }
+.dark .bg-yellow-800, .dark .hover\:bg-yellow-800 { --color-yellow-800: oklch(47.6% 0.114 61.907); }
+.dark .bg-yellow-900, .dark .hover\:bg-yellow-900 { --color-yellow-900: oklch(42.1% 0.095 57.708); }
+.dark .bg-yellow-950, .dark .hover\:bg-yellow-950 { --color-yellow-950: oklch(28.6% 0.066 53.813); }
+.dark .bg-green-700, .dark .hover\:bg-green-700 { --color-green-700: oklch(52.7% 0.154 150.069); }
+.dark .bg-green-800, .dark .hover\:bg-green-800 { --color-green-800: oklch(44.8% 0.119 151.328); }
+.dark .bg-green-900, .dark .hover\:bg-green-900 { --color-green-900: oklch(39.3% 0.095 152.535); }
+.dark .bg-green-950, .dark .hover\:bg-green-950 { --color-green-950: oklch(26.6% 0.065 152.934); }
+.dark .bg-emerald-700, .dark .hover\:bg-emerald-700 { --color-emerald-700: oklch(50.8% 0.118 165.612); }
+.dark .bg-emerald-800, .dark .hover\:bg-emerald-800 { --color-emerald-800: oklch(43.2% 0.095 166.913); }
+.dark .bg-emerald-900, .dark .hover\:bg-emerald-900 { --color-emerald-900: oklch(37.8% 0.077 168.94); }
+.dark .bg-emerald-950, .dark .hover\:bg-emerald-950 { --color-emerald-950: oklch(26.2% 0.051 172.552); }
+.dark .bg-blue-700, .dark .hover\:bg-blue-700 { --color-blue-700: oklch(48.8% 0.243 264.376); }
+.dark .bg-blue-800, .dark .hover\:bg-blue-800 { --color-blue-800: oklch(42.4% 0.199 265.638); }
+.dark .bg-blue-900, .dark .hover\:bg-blue-900 { --color-blue-900: oklch(37.9% 0.146 265.522); }
+.dark .bg-blue-950, .dark .hover\:bg-blue-950 { --color-blue-950: oklch(28.2% 0.091 267.935); }
+.dark .bg-indigo-700, .dark .hover\:bg-indigo-700 { --color-indigo-700: oklch(45.7% 0.24 277.023); }
+.dark .bg-indigo-800, .dark .hover\:bg-indigo-800 { --color-indigo-800: oklch(39.8% 0.195 277.366); }
+.dark .bg-indigo-900, .dark .hover\:bg-indigo-900 { --color-indigo-900: oklch(35.9% 0.144 278.697); }
+.dark .bg-indigo-950, .dark .hover\:bg-indigo-950 { --color-indigo-950: oklch(25.7% 0.09 281.288); }
+.dark .bg-purple-700, .dark .hover\:bg-purple-700 { --color-purple-700: oklch(49.6% 0.265 301.924); }
+.dark .bg-purple-800, .dark .hover\:bg-purple-800 { --color-purple-800: oklch(43.8% 0.218 303.724); }
+.dark .bg-purple-900, .dark .hover\:bg-purple-900 { --color-purple-900: oklch(38.1% 0.176 304.987); }
+.dark .bg-purple-950, .dark .hover\:bg-purple-950 { --color-purple-950: oklch(29.1% 0.149 302.717); }
+
+.dark .text-red-500 { --color-red-500: oklch(70.4% 0.191 22.216); }
+.dark .text-red-600 { --color-red-600: oklch(70.4% 0.191 22.216); }
+.dark .text-orange-500 { --color-orange-500: oklch(75% 0.183 55.934); }
+.dark .text-orange-600 { --color-orange-600: oklch(75% 0.183 55.934); }
+.dark .text-amber-500 { --color-amber-500: oklch(82.8% 0.189 84.429); }
+.dark .text-amber-600 { --color-amber-600: oklch(82.8% 0.189 84.429); }
+.dark .text-yellow-500 { --color-yellow-500: oklch(85.2% 0.199 91.936); }
+.dark .text-yellow-600 { --color-yellow-600: oklch(85.2% 0.199 91.936); }
+.dark .text-green-500 { --color-green-500: oklch(79.2% 0.209 151.711); }
+.dark .text-green-600 { --color-green-600: oklch(79.2% 0.209 151.711); }
+.dark .text-emerald-500 { --color-emerald-500: oklch(76.5% 0.177 163.223); }
+.dark .text-emerald-600 { --color-emerald-600: oklch(76.5% 0.177 163.223); }
+.dark .text-blue-500 { --color-blue-500: oklch(70.7% 0.165 254.624); }
+.dark .text-blue-600 { --color-blue-600: oklch(70.7% 0.165 254.624); }
+.dark .text-indigo-500 { --color-indigo-500: oklch(67.3% 0.182 276.935); }
+.dark .text-indigo-600 { --color-indigo-600: oklch(67.3% 0.182 276.935); }
+.dark .text-purple-500 { --color-purple-500: oklch(71.4% 0.203 305.504); }
+.dark .text-purple-600 { --color-purple-600: oklch(71.4% 0.203 305.504); }
+
+.dark .text-\[\#615EEB\] {
+  color: #8b89f3;
 }

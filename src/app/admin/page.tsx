@@ -19,7 +19,7 @@ export default function AdminPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-background">
         <Header />
         <main className="flex justify-center py-12">
           <Loader size="lg" text="Loading..." />
@@ -33,7 +33,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-background">
       <Header />
       <main>
         <AdminDashboard />

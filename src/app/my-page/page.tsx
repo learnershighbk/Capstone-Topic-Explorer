@@ -109,7 +109,7 @@ export default function MyPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-background">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex justify-center py-12">
@@ -122,7 +122,7 @@ export default function MyPage() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-background">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
@@ -147,7 +147,7 @@ export default function MyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-background">
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
