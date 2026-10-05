@@ -3,17 +3,8 @@ import type { SearchErrorCode } from './error';
 import { formatCitation } from '@/lib/citation';
 import type { AiReference, VerifiedDataSource, VerifiedReference } from '@/types';
 import type { DataSourcesResponse, ReferencesResponse } from './schema';
-import {
-  extractSourceName,
-  getHostname,
-  inferSourceType,
-  isAcademicUrl,
-  isOfficialDataUrl,
-  isSiteFrontPage,
-  mentionsAnyAuthor,
-  sourceNameMatches,
-  titlesMatch,
-} from './matching';
+import { getHostname, inferSourceType, isAcademicUrl, mentionsAnyAuthor, titlesMatch } from './matching';
+import { findSourcePage, parseSourceSuggestion } from './source-page';
 import { assessCrossrefResults, searchCrossref, toVerifiedReference } from './crossref';
 
 const SERPER_TIMEOUT_MS = 8000;
@@ -70,20 +61,11 @@ async function searchSerper(
 }
 
 /**
- * Picks the search result that is the suggested source's own page: an official host whose title
- * names the source. A specific dataset or report page wins over the site's front page, which is
- * kept only when the suggestion names the whole site (e.g. "KOSIS").
- */
-const findSourcePage = (sourceName: string, results: SerperSearchResult[]) => {
-  const namedOfficialPages = results.filter(
-    (r) => isOfficialDataUrl(r.link) && sourceNameMatches(sourceName, r.title)
-  );
-  return namedOfficialPages.find((r) => !isSiteFrontPage(r.link)) ?? namedOfficialPages[0];
-};
-
-/**
  * Confirms each AI-suggested data source by web search and links the page that publishes it.
- * Suggestions without such a page stay unverified rather than linking an unrelated site.
+ * The query carries the whole suggestion because the dataset is often named only in the detail
+ * ("Ministry of Employment and Labor: Employment Insurance statistics"); the organization alone
+ * returned its front page and third-party directories. Suggestions without a usable page stay
+ * unverified rather than linking an unrelated site.
  */
 export async function verifyDataSources(
   country: string,
@@ -93,9 +75,9 @@ export async function verifyDataSources(
 
   const searchOutcomes = await Promise.all(
     aiSuggestions.map(async (suggestion) => {
-      const sourceName = extractSourceName(suggestion);
-      const results = await searchSerper(`${sourceName} ${country}`, DATA_SOURCE_RESULT_COUNT);
-      return { suggestion, sourcePage: findSourcePage(sourceName, results) };
+      const { name, detail } = parseSourceSuggestion(suggestion);
+      const results = await searchSerper(`${name} ${detail} ${country}`, DATA_SOURCE_RESULT_COUNT);
+      return { suggestion, sourcePage: findSourcePage(suggestion, country, results) };
     })
   );
 

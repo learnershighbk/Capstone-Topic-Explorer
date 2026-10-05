@@ -50,12 +50,6 @@ const ORG_HOST_PATTERN = /\.org(\.[a-z]{2})?$/;
 /** Public research institutes and international organizations without a listed domain. */
 const PUBLIC_INSTITUTION_SUFFIXES = ['.re.kr', '.or.kr', '.int'];
 
-/** Open-edit or aggregator sites whose pages describe a source but are not the source. */
-const NON_PUBLISHER_DOMAINS = ['wikipedia.org', 'wikimedia.org', 'wikidata.org', 'reddit.org'];
-
-/** Paths that only mark a language or landing page, so the URL is still the site's front page. */
-const LANDING_PATH_PATTERN = /^\/((en|eng|ko|kor|home|main|index)(\.\w+)?\/?)?$/i;
-
 /** Words too common in titles to count as evidence that two titles name the same work. */
 const STOP_WORDS = new Set([
   'a', 'an', 'and', 'the', 'of', 'in', 'on', 'for', 'to', 'by', 'with', 'from', 'at', 'as', 'its', 'or', 'pdf',
@@ -93,7 +87,7 @@ export const isAcademicUrl = (url: string): boolean => {
 /** Whether a URL looks like an official data publisher (government, IO, NGO, or data portal). */
 export const isOfficialDataUrl = (url: string): boolean => {
   const host = getHostname(url);
-  if (!host || matchesAnyDomain(host, NON_PUBLISHER_DOMAINS)) return false;
+  if (!host) return false;
   return (
     isGovernmentHost(host) ||
     matchesAnyDomain(host, INTERNATIONAL_ORG_DOMAINS) ||
@@ -101,16 +95,6 @@ export const isOfficialDataUrl = (url: string): boolean => {
     ORG_HOST_PATTERN.test(host) ||
     host.startsWith('data.')
   );
-};
-
-/** Whether a URL is only a site's front page rather than a page for a specific dataset or report. */
-export const isSiteFrontPage = (url: string): boolean => {
-  try {
-    const { pathname, search } = new URL(url);
-    return !search && LANDING_PATH_PATTERN.test(pathname);
-  } catch {
-    return false;
-  }
 };
 
 export const inferSourceType = (url: string): SourceType => {
@@ -123,7 +107,7 @@ export const inferSourceType = (url: string): SourceType => {
   return 'other';
 };
 
-const toTitleWords = (title: string): Set<string> =>
+export const toTitleWords = (title: string): Set<string> =>
   new Set(
     title
       .toLowerCase()
@@ -155,13 +139,6 @@ const SOURCE_NAME_OVERLAP_THRESHOLD = 0.6;
 const MIN_SHARED_SOURCE_NAME_WORDS = 2;
 /** Shortest word that may match by prefix, so "korea" matches "korean" but "us" matches nothing extra. */
 const MIN_PREFIX_MATCH_LENGTH = 4;
-
-/**
- * Splits an AI data-source suggestion into its name, dropping the description the prompt asks
- * for: "KOSIS (Korean Statistical Information Service): monthly labor data" → the part before ":".
- */
-export const extractSourceName = (suggestion: string): string =>
-  (suggestion.split(/:\s|\s[-–—]\s/)[0] ?? suggestion).trim();
 
 const wordsAgree = (a: string, b: string) =>
   a === b ||

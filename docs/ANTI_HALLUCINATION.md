@@ -6,7 +6,7 @@ Step 4 "Detailed Topic Analysis"에서 제공되는 **Potential Data Sources**�
 
 > **현재 구현 (2026-10 기준)** — 아래 본문은 초기 설계안이며, 실제 구현은 다음과 같이 바뀌었습니다.
 >
-> - **Data Sources**: 신뢰 출처 목록(`TRUSTED_SOURCES`)을 주제어로 자동 추가하던 방식은 제거했습니다. 홈페이지 링크가 검색 없이 "Verified"로 표시되는 문제가 있었기 때문입니다. 이제는 AI가 제안한 각 출처를 웹 검색(Serper)하고, 공식 도메인이면서 **결과 제목이 출처 이름과 일치하는** 페이지만 채택합니다. 구체적인 자료 페이지를 홈페이지보다 우선합니다. (`src/features/search/backend/service.ts`의 `verifyDataSources`)
+> - **Data Sources**: 신뢰 출처 목록(`TRUSTED_SOURCES`)을 주제어로 자동 추가하던 방식은 제거했습니다. 홈페이지 링크가 검색 없이 "Verified"로 표시되는 문제가 있었기 때문입니다. 이제는 AI가 제안한 각 출처를 웹 검색(Serper)하고, 결과를 점수로 순위 매겨 채택합니다(`src/features/search/backend/source-page.ts`). 제안이 지목한 데이터셋 이름이 제목에 있는 페이지가 최우선이고, 그다음 출처 기관의 자체 사이트(호스트명에 약어·기관명이 들어간 경우), 그다음 다른 공식 도메인의 페이지 순입니다. 기관 첫 화면은 자체 사이트에서 더 구체적인 페이지가 없을 때만 마지막 수단으로 허용하고, 다른 기관의 첫 화면·위키·SNS·데이터 디렉터리 사이트는 채택하지 않습니다.
 > - **Key References**: Crossref DOI 조회를 먼저 하고, 실패하면 제목 웹 검색으로 확인합니다.
 > - 검증되지 않은 제안은 버리지 않고 "Not verified"로 표시하며, My Page에도 저장됩니다.
 
