@@ -4,6 +4,12 @@
 
 Step 4 "Detailed Topic Analysis"에서 제공되는 **Potential Data Sources**와 **Key References**의 할루시네이션 문제를 해결하기 위한 전략입니다.
 
+> **현재 구현 (2026-10 기준)** — 아래 본문은 초기 설계안이며, 실제 구현은 다음과 같이 바뀌었습니다.
+>
+> - **Data Sources**: 신뢰 출처 목록(`TRUSTED_SOURCES`)을 주제어로 자동 추가하던 방식은 제거했습니다. 홈페이지 링크가 검색 없이 "Verified"로 표시되는 문제가 있었기 때문입니다. 이제는 AI가 제안한 각 출처를 웹 검색(Serper)하고, 공식 도메인이면서 **결과 제목이 출처 이름과 일치하는** 페이지만 채택합니다. 구체적인 자료 페이지를 홈페이지보다 우선합니다. (`src/features/search/backend/service.ts`의 `verifyDataSources`)
+> - **Key References**: Crossref DOI 조회를 먼저 하고, 실패하면 제목 웹 검색으로 확인합니다.
+> - 검증되지 않은 제안은 버리지 않고 "Not verified"로 표시하며, My Page에도 저장됩니다.
+
 ---
 
 ## 현재 문제점 (v1.0)

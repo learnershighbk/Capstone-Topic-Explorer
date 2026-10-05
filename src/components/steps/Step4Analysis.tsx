@@ -94,16 +94,6 @@ export function Step4Analysis({
 
   const googleScholarUrl = (query: string) =>
     `https://scholar.google.com/scholar?q=${encodeURIComponent(query)}`;
-  const perplexityUrl = (query: string) =>
-    `https://www.perplexity.ai/search?q=${encodeURIComponent(query)}`;
-  const geminiUrl = (query: string) =>
-    `https://gemini.google.com/app?q=${encodeURIComponent(query)}`;
-  const chatgptUrl = (query: string) =>
-    `https://chat.openai.com/?q=${encodeURIComponent(query)}`;
-  const claudeUrl = (query: string) =>
-    `https://claude.ai/new?q=${encodeURIComponent(query)}`;
-
-  const researchQuery = `${selectedTopic.title} ${country} research`;
 
   return (
     <>
@@ -325,56 +315,6 @@ export function Step4Analysis({
             </AccordionContent>
           </AccordionItem>
 
-          {/* External Research Links */}
-          <AccordionItem value="external-links">
-            <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-              External Research Links
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-3">
-                <a
-                  href={googleScholarUrl(researchQuery)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 text-center text-base bg-[#615EEB]/10 text-[#615EEB] rounded-lg hover:bg-[#615EEB]/20 transition"
-                >
-                  Google Scholar
-                </a>
-                <a
-                  href={perplexityUrl(researchQuery)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 text-center text-base bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
-                >
-                  Perplexity AI
-                </a>
-                <a
-                  href={geminiUrl(researchQuery)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 text-center text-base bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition"
-                >
-                  Gemini
-                </a>
-                <a
-                  href={chatgptUrl(researchQuery)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 text-center text-base bg-teal-100 text-teal-700 rounded-lg hover:bg-teal-200 transition"
-                >
-                  ChatGPT
-                </a>
-                <a
-                  href={claudeUrl(researchQuery)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 text-center text-base bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition"
-                >
-                  Claude
-                </a>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
         </Accordion>
       </div>
 

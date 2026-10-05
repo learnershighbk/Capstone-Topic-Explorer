@@ -310,7 +310,7 @@ export async function generateAnalysis(
 Provide:
 - rationale: the topic's relevance to current policy discussions, its research feasibility (data availability and methodology), and its potential impact on policy and practice
 - data_sources: 5-8 potential data sources, each with a short description. Prefer real, verifiable sources.
-- key_references: 5-8 key references. For each, give authors (one entry per author, e.g. "Acemoglu, D."; use the organization name for institutional reports), year of publication, the exact full title, and venue (journal or publisher). Cite only works you are confident exist, with their exact published titles; each one is checked against web search, and unverifiable ones are flagged to the student.
+- key_references: 5-8 key references. For each, give authors (one entry per author, e.g. "Acemoglu, D."; use the organization name for institutional reports), year of publication, the exact full title, and venue (journal or publisher). Include 1-2 foundational works that define the theory or concept, and make the rest recent empirical studies, preferably published in the last 10 years. Cite only works you are confident exist, with their exact published titles; each one is checked against web search, and unverifiable ones are flagged to the student.
 - methodologies: 3-5 recommended methodologies, each with an explanation of how it applies to this research
 - policy_questions: 5 key policy research questions`;
 

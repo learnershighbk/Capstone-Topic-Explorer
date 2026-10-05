@@ -118,16 +118,6 @@ export interface SavedAnalysisSummary {
   created_at: string;
 }
 
-// Trusted source for anti-hallucination
-export interface TrustedSource {
-  name: string;
-  url: string;
-  description: string;
-  type: SourceType;
-  countries: string[];
-  topics: string[];
-}
-
 // API Response types
 export interface ApiSuccessResponse<T> {
   success: true;

@@ -1,20 +1,25 @@
 import { success, type HandlerResult } from '@/backend/http/response';
 import type { SearchErrorCode } from './error';
-import { findTrustedSources } from '@/data/trusted-sources';
 import { formatCitation } from '@/lib/citation';
 import type { AiReference, VerifiedDataSource, VerifiedReference } from '@/types';
 import type { DataSourcesResponse, ReferencesResponse } from './schema';
 import {
+  extractSourceName,
   getHostname,
   inferSourceType,
   isAcademicUrl,
   isOfficialDataUrl,
+  isSiteFrontPage,
   mentionsAnyAuthor,
+  sourceNameMatches,
   titlesMatch,
 } from './matching';
 import { assessCrossrefResults, searchCrossref, toVerifiedReference } from './crossref';
 
 const SERPER_TIMEOUT_MS = 8000;
+const DEFAULT_RESULT_COUNT = 5;
+/** Serper bills per query up to 10 results; more candidates raise the odds of a specific page. */
+const DATA_SOURCE_RESULT_COUNT = 10;
 
 interface SerperSearchResult {
   title: string;
@@ -29,7 +34,10 @@ interface SerperResponse {
   };
 }
 
-async function searchSerper(query: string): Promise<SerperSearchResult[]> {
+async function searchSerper(
+  query: string,
+  resultCount: number = DEFAULT_RESULT_COUNT
+): Promise<SerperSearchResult[]> {
   const apiKey = process.env.SERPER_API_KEY;
 
   if (!apiKey) {
@@ -45,7 +53,7 @@ async function searchSerper(query: string): Promise<SerperSearchResult[]> {
       },
       body: JSON.stringify({
         q: query,
-        num: 5,
+        num: resultCount,
       }),
       signal: AbortSignal.timeout(SERPER_TIMEOUT_MS),
     });
@@ -61,56 +69,52 @@ async function searchSerper(query: string): Promise<SerperSearchResult[]> {
   }
 }
 
-const nameOverlaps = (a: string, b: string) => {
-  const lowerA = a.toLowerCase();
-  const lowerB = b.toLowerCase();
-  return lowerA.includes(lowerB) || lowerB.includes(lowerA);
+/**
+ * Picks the search result that is the suggested source's own page: an official host whose title
+ * names the source. A specific dataset or report page wins over the site's front page, which is
+ * kept only when the suggestion names the whole site (e.g. "KOSIS").
+ */
+const findSourcePage = (sourceName: string, results: SerperSearchResult[]) => {
+  const namedOfficialPages = results.filter(
+    (r) => isOfficialDataUrl(r.link) && sourceNameMatches(sourceName, r.title)
+  );
+  return namedOfficialPages.find((r) => !isSiteFrontPage(r.link)) ?? namedOfficialPages[0];
 };
 
+/**
+ * Confirms each AI-suggested data source by web search and links the page that publishes it.
+ * Suggestions without such a page stay unverified rather than linking an unrelated site.
+ */
 export async function verifyDataSources(
   country: string,
-  topic: string,
   aiSuggestions: string[]
 ): Promise<HandlerResult<DataSourcesResponse, SearchErrorCode>> {
   const verifiedAt = new Date().toISOString();
 
-  const trustedSources: VerifiedDataSource[] = findTrustedSources(country, topic).map((source) => ({
-    name: source.name,
-    url: source.url,
-    description: source.description,
-    source_type: source.type,
-    verified_at: verifiedAt,
-  }));
-
-  const suggestionsToSearch = aiSuggestions.filter(
-    (suggestion) => !trustedSources.some((trusted) => nameOverlaps(trusted.name, suggestion))
-  );
-
   const searchOutcomes = await Promise.all(
-    suggestionsToSearch.map(async (suggestion) => {
-      const results = await searchSerper(`${suggestion} ${country} data statistics official site`);
-      return { suggestion, officialResult: results.find((r) => isOfficialDataUrl(r.link)) };
+    aiSuggestions.map(async (suggestion) => {
+      const sourceName = extractSourceName(suggestion);
+      const results = await searchSerper(`${sourceName} ${country}`, DATA_SOURCE_RESULT_COUNT);
+      return { suggestion, sourcePage: findSourcePage(sourceName, results) };
     })
   );
 
-  const searchedSources: VerifiedDataSource[] = searchOutcomes.flatMap(({ suggestion, officialResult }) =>
-    officialResult
-      ? [
-          {
-            name: suggestion,
-            url: officialResult.link,
-            description: officialResult.snippet.substring(0, 200),
-            source_type: inferSourceType(officialResult.link),
-            verified_at: verifiedAt,
-          },
-        ]
-      : []
-  );
-
   return success({
-    verified_sources: [...trustedSources, ...searchedSources],
+    verified_sources: searchOutcomes.flatMap(({ suggestion, sourcePage }) =>
+      sourcePage
+        ? [
+            {
+              name: suggestion,
+              url: sourcePage.link,
+              description: sourcePage.snippet.substring(0, 200),
+              source_type: inferSourceType(sourcePage.link),
+              verified_at: verifiedAt,
+            },
+          ]
+        : []
+    ),
     unverified_suggestions: searchOutcomes
-      .filter(({ officialResult }) => !officialResult)
+      .filter(({ sourcePage }) => !sourcePage)
       .map(({ suggestion }) => suggestion),
   });
 }

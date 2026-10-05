@@ -38,7 +38,23 @@ const ACADEMIC_DOMAINS = [
 
 const ACADEMIC_SUFFIXES = ['.edu', '.ac.kr', '.ac.uk', '.ac.jp', '.edu.au'];
 
-const GOVERNMENT_SUFFIXES = ['.gov', '.go.kr', '.gov.uk', '.gov.au', '.go.jp'];
+/**
+ * Matches government hosts worldwide: "census.gov", "kosis.go.kr", "data.gov.in", "inegi.gob.mx",
+ * "insee.gouv.fr". Students study many countries, so a fixed suffix list missed most of them.
+ */
+const GOVERNMENT_HOST_PATTERN = /(^|\.)(gov|go|gob|gouv|govt)(\.[a-z]{2})?$/;
+
+/** ".org" and its country forms such as "inegi.org.mx". */
+const ORG_HOST_PATTERN = /\.org(\.[a-z]{2})?$/;
+
+/** Public research institutes and international organizations without a listed domain. */
+const PUBLIC_INSTITUTION_SUFFIXES = ['.re.kr', '.or.kr', '.int'];
+
+/** Open-edit or aggregator sites whose pages describe a source but are not the source. */
+const NON_PUBLISHER_DOMAINS = ['wikipedia.org', 'wikimedia.org', 'wikidata.org', 'reddit.org'];
+
+/** Paths that only mark a language or landing page, so the URL is still the site's front page. */
+const LANDING_PATH_PATTERN = /^\/((en|eng|ko|kor|home|main|index)(\.\w+)?\/?)?$/i;
 
 /** Words too common in titles to count as evidence that two titles name the same work. */
 const STOP_WORDS = new Set([
@@ -66,6 +82,8 @@ const matchesAnyDomain = (host: string, domains: string[]) =>
 const matchesAnySuffix = (host: string, suffixes: string[]) =>
   suffixes.some((suffix) => host.endsWith(suffix));
 
+const isGovernmentHost = (host: string) => GOVERNMENT_HOST_PATTERN.test(host);
+
 export const isAcademicUrl = (url: string): boolean => {
   const host = getHostname(url);
   if (!host) return false;
@@ -75,19 +93,30 @@ export const isAcademicUrl = (url: string): boolean => {
 /** Whether a URL looks like an official data publisher (government, IO, NGO, or data portal). */
 export const isOfficialDataUrl = (url: string): boolean => {
   const host = getHostname(url);
-  if (!host) return false;
+  if (!host || matchesAnyDomain(host, NON_PUBLISHER_DOMAINS)) return false;
   return (
-    matchesAnySuffix(host, GOVERNMENT_SUFFIXES) ||
+    isGovernmentHost(host) ||
     matchesAnyDomain(host, INTERNATIONAL_ORG_DOMAINS) ||
-    host.endsWith('.org') ||
+    matchesAnySuffix(host, PUBLIC_INSTITUTION_SUFFIXES) ||
+    ORG_HOST_PATTERN.test(host) ||
     host.startsWith('data.')
   );
+};
+
+/** Whether a URL is only a site's front page rather than a page for a specific dataset or report. */
+export const isSiteFrontPage = (url: string): boolean => {
+  try {
+    const { pathname, search } = new URL(url);
+    return !search && LANDING_PATH_PATTERN.test(pathname);
+  } catch {
+    return false;
+  }
 };
 
 export const inferSourceType = (url: string): SourceType => {
   const host = getHostname(url);
   if (!host) return 'other';
-  if (matchesAnySuffix(host, GOVERNMENT_SUFFIXES)) return 'government';
+  if (isGovernmentHost(host)) return 'government';
   if (matchesAnyDomain(host, INTERNATIONAL_ORG_DOMAINS)) return 'international_org';
   if (isAcademicUrl(url)) return 'academic';
   if (host.endsWith('.org')) return 'ngo';
@@ -119,6 +148,45 @@ export const titlesMatch = (citedTitle: string, resultTitle: string): boolean =>
   const requiredShared = Math.min(MIN_SHARED_TITLE_WORDS, citedWords.size);
 
   return sharedCount >= requiredShared && sharedCount / shorterSize >= TITLE_OVERLAP_THRESHOLD;
+};
+
+/** Share of a data source name's words that a search-result title must contain. */
+const SOURCE_NAME_OVERLAP_THRESHOLD = 0.6;
+const MIN_SHARED_SOURCE_NAME_WORDS = 2;
+/** Shortest word that may match by prefix, so "korea" matches "korean" but "us" matches nothing extra. */
+const MIN_PREFIX_MATCH_LENGTH = 4;
+
+/**
+ * Splits an AI data-source suggestion into its name, dropping the description the prompt asks
+ * for: "KOSIS (Korean Statistical Information Service): monthly labor data" → the part before ":".
+ */
+export const extractSourceName = (suggestion: string): string =>
+  (suggestion.split(/:\s|\s[-–—]\s/)[0] ?? suggestion).trim();
+
+const wordsAgree = (a: string, b: string) =>
+  a === b ||
+  (Math.min(a.length, b.length) >= MIN_PREFIX_MATCH_LENGTH && (a.startsWith(b) || b.startsWith(a)));
+
+const nameVariantMatches = (variant: string, resultWords: string[]): boolean => {
+  const nameWords = [...toTitleWords(variant)];
+  if (nameWords.length === 0) return false;
+
+  const sharedCount = nameWords.filter((word) => resultWords.some((r) => wordsAgree(word, r))).length;
+  const requiredShared = Math.min(MIN_SHARED_SOURCE_NAME_WORDS, nameWords.length);
+
+  return sharedCount >= requiredShared && sharedCount / nameWords.length >= SOURCE_NAME_OVERLAP_THRESHOLD;
+};
+
+/**
+ * Decides whether a search-result title names the suggested data source. A parenthesized acronym
+ * is tried on its own too, because sites often title themselves only by it ("KOSIS 국가통계포털").
+ */
+export const sourceNameMatches = (sourceName: string, resultTitle: string): boolean => {
+  const resultWords = [...toTitleWords(resultTitle)];
+  const acronym = sourceName.match(/\(([^)]+)\)/)?.[1] ?? '';
+  const fullName = sourceName.replace(/\([^)]*\)/g, ' ');
+
+  return [fullName, acronym].some((variant) => nameVariantMatches(variant, resultWords));
 };
 
 /** Words shared by too many journal names to show that two venues are the same. */

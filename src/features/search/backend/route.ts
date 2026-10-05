@@ -34,7 +34,7 @@ export function registerSearchRoutes(app: Hono<AppEnv>) {
 
     logger.info(`Verifying data sources for ${country} - ${topic}`);
 
-    const result = await verifyDataSources(country, topic, aiSuggestions);
+    const result = await verifyDataSources(country, aiSuggestions);
 
     if (result.ok) {
       logger.info(

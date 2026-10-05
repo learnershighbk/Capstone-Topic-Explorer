@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  extractSourceName,
   inferSourceType,
   isAcademicUrl,
   isOfficialDataUrl,
+  isSiteFrontPage,
+  sourceNameMatches,
   mentionsAnyAuthor,
   titlesMatch,
   venuesAgree,
 } from './matching';
-import { findTrustedSources } from '@/data/trusted-sources';
 import { formatCitation } from '@/lib/citation';
 
 describe('titlesMatch', () => {
@@ -64,15 +66,6 @@ describe('URL classification', () => {
   });
 });
 
-describe('findTrustedSources', () => {
-  const names = (topic: string) => findTrustedSources('global', topic).map((s) => s.name);
-
-  it('matches whole words and plurals only', () => {
-    expect(names('Property taxes and local finance')).toContain('OECD Data');
-    expect(names('A taxonomy of urban planning')).not.toContain('OECD Data');
-  });
-});
-
 describe('formatCitation', () => {
   it('formats a structured reference', () => {
     expect(
@@ -118,5 +111,42 @@ describe('mentionsAnyAuthor', () => {
 
   it('passes when no authors are cited', () => {
     expect(mentionsAnyAuthor('anything', [])).toBe(true);
+  });
+});
+
+describe('data source matching', () => {
+  it('extracts the name from a suggestion with a description', () => {
+    expect(extractSourceName('KOSIS (Korean Statistical Information Service): monthly labor data')).toBe(
+      'KOSIS (Korean Statistical Information Service)'
+    );
+    expect(extractSourceName('Labour Force Survey - quarterly employment data')).toBe('Labour Force Survey');
+    expect(extractSourceName('World Development Indicators')).toBe('World Development Indicators');
+  });
+
+  it('accepts a result titled by the source name or its acronym', () => {
+    expect(sourceNameMatches('World Development Indicators', 'World Development Indicators | DataBank')).toBe(true);
+    expect(sourceNameMatches('Korean Statistical Information Service (KOSIS)', 'KOSIS 국가통계포털')).toBe(true);
+    expect(sourceNameMatches('Korean Labor and Income Panel Study', 'Korea Labor & Income Panel Study')).toBe(true);
+  });
+
+  it('rejects a result about something else on an official host', () => {
+    expect(sourceNameMatches('Korea Labor and Income Panel Study', 'Ministry of Employment and Labor')).toBe(false);
+    expect(sourceNameMatches('National Health Insurance Claims Data', 'Health - OECD')).toBe(false);
+  });
+
+  it('tells front pages from specific pages', () => {
+    expect(isSiteFrontPage('https://kosis.kr')).toBe(true);
+    expect(isSiteFrontPage('https://www.kli.re.kr/eng/')).toBe(true);
+    expect(isSiteFrontPage('https://www.kli.re.kr/klips/index.do')).toBe(false);
+    expect(isSiteFrontPage('https://databank.worldbank.org/source/world-development-indicators')).toBe(false);
+  });
+
+  it('treats government hosts worldwide as official but not Wikipedia', () => {
+    expect(isOfficialDataUrl('https://www.data.gov.in/catalog')).toBe(true);
+    expect(isOfficialDataUrl('https://www.inegi.org.mx/temas')).toBe(true);
+    expect(isOfficialDataUrl('https://www.bps.go.id/statistics')).toBe(true);
+    expect(isOfficialDataUrl('https://www.kli.re.kr/klips')).toBe(true);
+    expect(isOfficialDataUrl('https://en.wikipedia.org/wiki/KOSIS')).toBe(false);
+    expect(inferSourceType('https://www.bps.go.id')).toBe('government');
   });
 });
