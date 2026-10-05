@@ -4,13 +4,14 @@ import type * as z from 'zod/v4';
 import { success, failure, type HandlerResult, type ErrorResult } from '@/backend/http/response';
 import { OPENAI_ERROR_CODES as AI_ERROR_CODES, type OpenAIErrorCode } from './error';
 import {
-  issuesResponseSchema,
+  issuesModelOutputSchema,
   topicsResponseSchema,
   analysisResponseSchema,
   type IssuesResponse,
   type TopicsResponse,
   type AnalysisResponse,
 } from './schema';
+import { ISSUE_COUNT, MAX_SCORE, MIN_SCORE, scorePolicyIssues } from './issue-scoring';
 
 const MODEL = 'claude-sonnet-5-5';
 
@@ -254,22 +255,43 @@ export async function generatePolicyIssues(
 For each policy issue, provide:
 1. issue: a clear, concise issue title
 2. description: 1-2 sentences explaining the issue and why it matters
-3. importance_score: 1-10, based on policy relevance and urgency
-4. frequency_score: 1-10, based on how often the topic appears in academic and policy discussions
-5. total_score: the sum of importance_score and frequency_score
+3. importance_score: an integer from ${MIN_SCORE} to ${MAX_SCORE} using the importance rubric
+4. frequency_score: an integer from ${MIN_SCORE} to ${MAX_SCORE} using the frequency rubric
 
-Generate exactly 10 policy issues, sorted by total_score in descending order.`;
+Importance rubric (policy significance in this country):
+- 9-10: top national priority; on the current government agenda or national development plan, affects a large share of the population, or is urgent
+- 7-8: major sectoral issue with active reforms, legislation, or significant public spending
+- 5-6: notable issue limited to a sector, region, or specific group
+- 3-4: niche issue with limited reach or low urgency
+- 1-2: marginal issue with little policy consequence
+
+Frequency rubric (prominence in academic and policy discussion over roughly the last five years):
+- 9-10: extensively studied; appears regularly in international organization reports (e.g. World Bank, OECD, UN, ADB) and in domestic policy debate
+- 7-8: discussed regularly in research and policy reports
+- 5-6: moderate attention; some studies and reports
+- 3-4: occasional mentions; little dedicated research
+- 1-2: rarely discussed
+
+Score each issue against the rubric independently and use the full range where warranted, so the scores differentiate the issues rather than clustering. If you are unsure about evidence for this country, score conservatively.
+
+Generate exactly ${ISSUE_COUNT} policy issues.`;
 
   const user = `Country: ${country}
 Area of Interest: ${interest}
 
-Generate 10 policy issues a graduate student could research for a capstone project. The issues should be:
+Generate ${ISSUE_COUNT} policy issues a graduate student could research for a capstone project. The issues should be:
 1. Specific to the country mentioned
 2. Related to the area of interest
 3. Feasible for academic research
 4. Relevant to current policy discussions`;
 
-  return callClaudeWithRetry({ system, user, schema: issuesResponseSchema });
+  const result = await callClaudeWithRetry({ system, user, schema: issuesModelOutputSchema });
+
+  if (!result.ok) {
+    return result as AiFailure;
+  }
+
+  return success(scorePolicyIssues(result.data.policy_issues));
 }
 
 export async function generateTopics(

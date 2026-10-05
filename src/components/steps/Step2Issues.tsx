@@ -32,9 +32,12 @@ export function Step2Issues({
       </p>
 
       <div className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-base text-gray-700">
-        Select one policy issue to explore further. Each issue is scored on a 1-10 scale for{' '}
+        Select one policy issue to explore further. Each issue is scored by AI on a 1-10 rubric for{' '}
         <strong>Importance</strong> (policy significance) and{' '}
-        <strong>Frequency</strong> (current discourse prevalence).
+        <strong>Frequency</strong> (prominence in research and policy discussion).
+        <span className="mt-1 block text-sm text-gray-500">
+          Scores are AI estimates for comparing issues, not measured statistics.
+        </span>
       </div>
 
       <div className="space-y-3 mb-6">

@@ -19,6 +19,13 @@ export const issuesResponseSchema = z.object({
   policy_issues: z.array(policyIssueSchema),
 });
 
+/** What the model returns: scores only; the total and ordering are computed on the server. */
+export const policyIssueDraftSchema = policyIssueSchema.omit({ total_score: true });
+
+export const issuesModelOutputSchema = z.object({
+  policy_issues: z.array(policyIssueDraftSchema),
+});
+
 // Topics API
 export const topicsRequestSchema = z.object({
   country: z.string().min(1, 'Country is required').max(MAX.country),
@@ -73,6 +80,7 @@ export const analysisResponseSchema = z.object({
 
 export type IssuesRequest = z.infer<typeof issuesRequestSchema>;
 export type IssuesResponse = z.infer<typeof issuesResponseSchema>;
+export type PolicyIssueDraft = z.infer<typeof policyIssueDraftSchema>;
 export type TopicsRequest = z.infer<typeof topicsRequestSchema>;
 export type TopicsResponse = z.infer<typeof topicsResponseSchema>;
 export type AnalysisRequest = z.infer<typeof analysisRequestSchema>;
