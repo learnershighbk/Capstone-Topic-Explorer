@@ -9,7 +9,11 @@ import { useAuth } from '@/features/capstone-auth';
 import { useStepStore } from '@/features/explorer/stores/use-step-store';
 import { match, P } from 'ts-pattern';
 import { apiClient, isAxiosError, extractApiErrorMessage } from '@/lib/remote/api-client';
-import { OPENAI_ERROR_CODES } from '@/features/openai/lib/dto';
+import {
+  OPENAI_ERROR_CODES,
+  type AiEndpoint,
+  type DailyLimitDetails,
+} from '@/features/openai/lib/dto';
 import { toast } from '@/hooks/use-toast';
 import type {
   PolicyIssue,
@@ -23,14 +27,25 @@ type AnalysisPhase = 'generating' | 'verifying-sources' | 'done';
 
 const DESTRUCTIVE = 'destructive' as const;
 
-const getApiErrorCode = (error: unknown) => {
-  if (!isAxiosError(error)) {
-    return undefined;
-  }
+const AI_ENDPOINT_LABELS: Record<AiEndpoint, string> = {
+  issues: '정책 이슈 생성',
+  topics: '연구 주제 생성',
+  analysis: '주제 분석',
+};
 
-  const payload = error.response?.data as { error?: { code?: string } } | undefined;
+type ApiErrorPayload = { error?: { code?: string; details?: unknown } };
 
-  return payload?.error?.code;
+const getApiErrorPayload = (error: unknown) =>
+  isAxiosError(error) ? (error.response?.data as ApiErrorPayload | undefined)?.error : undefined;
+
+const getApiErrorCode = (error: unknown) => getApiErrorPayload(error)?.code;
+
+const describeDailyLimit = (error: unknown) => {
+  const details = getApiErrorPayload(error)?.details as Partial<DailyLimitDetails> | undefined;
+  const label = details?.endpoint ? AI_ENDPOINT_LABELS[details.endpoint] : 'AI 기능';
+  const limitText = details?.limit ? `(${details.limit}회)` : '';
+
+  return `오늘의 ${label} 사용 한도${limitText}를 모두 사용했습니다. 한국 시간 자정 이후 다시 이용해 주세요.`;
 };
 
 function getErrorToast(error: unknown) {
@@ -41,6 +56,16 @@ function getErrorToast(error: unknown) {
     .with({ code: OPENAI_ERROR_CODES.QUOTA_EXCEEDED }, () => ({
       title: 'Service Unavailable',
       description: 'AI 서비스 사용량이 소진되었습니다. 관리자에게 문의해 주세요.',
+      variant: DESTRUCTIVE,
+    }))
+    .with({ code: OPENAI_ERROR_CODES.DAILY_LIMIT_EXCEEDED }, () => ({
+      title: 'Daily Limit Reached',
+      description: describeDailyLimit(error),
+      variant: DESTRUCTIVE,
+    }))
+    .with({ code: OPENAI_ERROR_CODES.USAGE_TRACKING_ERROR }, () => ({
+      title: 'Service Unavailable',
+      description: '일시적으로 사용량을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
       variant: DESTRUCTIVE,
     }))
     .with({ status: 401 }, () => ({

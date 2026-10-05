@@ -6,12 +6,13 @@ import { issuesRequestSchema, topicsRequestSchema, analysisRequestSchema } from 
 import { OPENAI_ERROR_CODES } from './error';
 import { generatePolicyIssues, generateTopics, generateAnalysis } from './service';
 import { requireSession } from '@/features/capstone-auth/backend/middleware';
+import { enforceDailyLimit } from './usage-limit';
 
 export function registerOpenAIRoutes(app: Hono<AppEnv>) {
   app.use('/api/openai/*', requireSession());
 
   // POST /api/openai/issues
-  app.post('/api/openai/issues', async (c) => {
+  app.post('/api/openai/issues', enforceDailyLimit('issues'), async (c) => {
     const logger = getLogger(c);
 
     const body = await c.req.json();
@@ -43,7 +44,7 @@ export function registerOpenAIRoutes(app: Hono<AppEnv>) {
   });
 
   // POST /api/openai/topics
-  app.post('/api/openai/topics', async (c) => {
+  app.post('/api/openai/topics', enforceDailyLimit('topics'), async (c) => {
     const logger = getLogger(c);
 
     const body = await c.req.json();
@@ -75,7 +76,7 @@ export function registerOpenAIRoutes(app: Hono<AppEnv>) {
   });
 
   // POST /api/openai/analysis
-  app.post('/api/openai/analysis', async (c) => {
+  app.post('/api/openai/analysis', enforceDailyLimit('analysis'), async (c) => {
     const logger = getLogger(c);
 
     const body = await c.req.json();

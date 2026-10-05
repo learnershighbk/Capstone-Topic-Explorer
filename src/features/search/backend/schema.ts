@@ -1,9 +1,15 @@
 import { z } from 'zod';
 
+/** Bounds each search request; an analysis yields only a handful of suggestions. */
+const MAX_COUNTRY_LENGTH = 100;
+const MAX_TOPIC_LENGTH = 500;
+const MAX_SUGGESTION_LENGTH = 1000;
+const MAX_SUGGESTIONS = 20;
+
 export const dataSourcesRequestSchema = z.object({
-  country: z.string().min(1, 'Country is required'),
-  topic: z.string().min(1, 'Topic is required'),
-  aiSuggestions: z.array(z.string()),
+  country: z.string().min(1, 'Country is required').max(MAX_COUNTRY_LENGTH),
+  topic: z.string().min(1, 'Topic is required').max(MAX_TOPIC_LENGTH),
+  aiSuggestions: z.array(z.string().max(MAX_SUGGESTION_LENGTH)).max(MAX_SUGGESTIONS),
 });
 
 export const verifiedDataSourceSchema = z.object({
@@ -20,9 +26,9 @@ export const dataSourcesResponseSchema = z.object({
 });
 
 export const referencesRequestSchema = z.object({
-  country: z.string().min(1, 'Country is required'),
-  topic: z.string().min(1, 'Topic is required'),
-  aiSuggestions: z.array(z.string()),
+  country: z.string().min(1, 'Country is required').max(MAX_COUNTRY_LENGTH),
+  topic: z.string().min(1, 'Topic is required').max(MAX_TOPIC_LENGTH),
+  aiSuggestions: z.array(z.string().max(MAX_SUGGESTION_LENGTH)).max(MAX_SUGGESTIONS),
 });
 
 export const verifiedReferenceSchema = z.object({

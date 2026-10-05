@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CountrySelect } from '@/components/common/CountrySelect';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { AI_INPUT_MAX_LENGTH } from '@/features/openai/lib/dto';
 import { Label } from '@/components/ui/label';
 import { LoginModal } from '@/features/capstone-auth';
 
@@ -71,6 +72,7 @@ export function Step1Scope({
             id="interest"
             value={interest}
             onChange={(e) => onInterestChange(e.target.value)}
+            maxLength={AI_INPUT_MAX_LENGTH.interest}
             placeholder="e.g., Digital Healthcare, Sustainable Energy Policy, Education Reform, Urban Development..."
             className="min-h-[80px] border-gray-300 focus:border-[#615EEB] focus:ring-[#615EEB]"
           />

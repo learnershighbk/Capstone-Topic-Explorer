@@ -1,9 +1,10 @@
 import * as z from 'zod/v4';
+import { AI_INPUT_MAX_LENGTH as MAX } from '../constants/limits';
 
 // Issues API
 export const issuesRequestSchema = z.object({
-  country: z.string().min(1, 'Country is required'),
-  interest: z.string().min(1, 'Interest is required'),
+  country: z.string().min(1, 'Country is required').max(MAX.country),
+  interest: z.string().min(1, 'Interest is required').max(MAX.interest),
 });
 
 export const policyIssueSchema = z.object({
@@ -20,9 +21,12 @@ export const issuesResponseSchema = z.object({
 
 // Topics API
 export const topicsRequestSchema = z.object({
-  country: z.string().min(1, 'Country is required'),
-  issue: z.string().min(1, 'Issue is required'),
-  existingTopics: z.array(z.string()).optional(),
+  country: z.string().min(1, 'Country is required').max(MAX.country),
+  issue: z.string().min(1, 'Issue is required').max(MAX.issue),
+  existingTopics: z
+    .array(z.string().max(MAX.topicTitle))
+    .max(MAX.existingTopicsCount)
+    .optional(),
 });
 
 export const topicSchema = z.object({
@@ -36,9 +40,9 @@ export const topicsResponseSchema = z.object({
 
 // Analysis API
 export const analysisRequestSchema = z.object({
-  country: z.string().min(1, 'Country is required'),
-  issue: z.string().min(1, 'Issue is required'),
-  topicTitle: z.string().min(1, 'Topic title is required'),
+  country: z.string().min(1, 'Country is required').max(MAX.country),
+  issue: z.string().min(1, 'Issue is required').max(MAX.issue),
+  topicTitle: z.string().min(1, 'Topic title is required').max(MAX.topicTitle),
 });
 
 export const rationaleSchema = z.object({
