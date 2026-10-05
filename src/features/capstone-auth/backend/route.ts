@@ -5,7 +5,8 @@ import { getSupabase, getLogger } from '@/backend/hono/context';
 import { respond, success, failure } from '@/backend/http/response';
 import { loginRequestSchema } from './schema';
 import { AUTH_ERROR_CODES } from './error';
-import { loginStudent } from './service';
+import { getStudentRole, loginStudent } from './service';
+import { checkAdminAccess, getAdminPassword } from './admin-password';
 import {
   SESSION_COOKIE_NAME,
   SESSION_EXPIRY_SECONDS,
@@ -48,9 +49,22 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
       );
     }
 
-    const { studentId } = parseResult.data;
+    const { studentId, adminPassword } = parseResult.data;
 
     logger.info(`Login attempt for student: ${studentId}`);
+
+    const roleResult = await getStudentRole(supabase, studentId);
+
+    if (!roleResult.ok) {
+      return respond(c, roleResult);
+    }
+
+    const denial = checkAdminAccess(roleResult.data, adminPassword, getAdminPassword());
+
+    if (denial) {
+      logger.warn(`Admin login blocked for ${studentId}: ${denial.code}`);
+      return respond(c, failure(denial.status, denial.code, denial.message));
+    }
 
     const result = await loginStudent(supabase, studentId);
 

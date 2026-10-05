@@ -5,6 +5,7 @@ export const loginRequestSchema = z.object({
     .string()
     .length(9, 'Student ID must be exactly 9 digits')
     .regex(/^[0-9]{9}$/, 'Student ID must contain only digits'),
+  adminPassword: z.string().max(200).optional(),
 });
 
 export const loginResponseSchema = z.object({

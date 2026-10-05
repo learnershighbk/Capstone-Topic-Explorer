@@ -11,7 +11,7 @@ const SECRET = 'a'.repeat(64);
 const NOW = 1_800_000_000_000;
 
 const session: SessionData = {
-  studentId: '321000059',
+  studentId: '202412345',
   role: 'student',
   createdAt: NOW,
   expiresAt: NOW + 60_000,

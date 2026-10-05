@@ -4,6 +4,9 @@ export const AUTH_ERROR_CODES = {
   DATABASE_ERROR: 'DATABASE_ERROR',
   UNAUTHORIZED: 'UNAUTHORIZED',
   CONFIG_ERROR: 'CONFIG_ERROR',
+  /** The student ID belongs to an admin; resubmit with the admin password. */
+  ADMIN_PASSWORD_REQUIRED: 'ADMIN_PASSWORD_REQUIRED',
+  INVALID_ADMIN_PASSWORD: 'INVALID_ADMIN_PASSWORD',
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];

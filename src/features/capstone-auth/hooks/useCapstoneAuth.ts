@@ -50,8 +50,11 @@ export function useCapstoneAuth() {
     checkSession();
   }, [checkSession]);
 
-  const login = useCallback(async (studentId: string): Promise<LoginResponse> => {
-    const { data } = await apiClient.post<LoginResponse>('/api/auth/login', { studentId });
+  const login = useCallback(async (studentId: string, adminPassword?: string): Promise<LoginResponse> => {
+    const { data } = await apiClient.post<LoginResponse>('/api/auth/login', {
+      studentId,
+      ...(adminPassword ? { adminPassword } : {}),
+    });
     setState({
       isLoggedIn: true,
       studentId: data.studentId,

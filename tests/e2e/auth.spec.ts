@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// A regular (non-admin) account; admin IDs now require a password.
+const TEST_STUDENT_ID = process.env.E2E_STUDENT_ID ?? '202412345';
+
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -14,7 +17,7 @@ test.describe('Authentication', () => {
     await expect(page.getByLabel('Student ID')).toBeVisible();
 
     // 학번 입력 - 실제 placeholder 사용
-    await page.getByPlaceholder('e.g., 202412345').fill('321000059');
+    await page.getByPlaceholder('e.g., 202412345').fill(TEST_STUDENT_ID);
     await page.getByRole('button', { name: 'Login' }).last().click();
 
     // 로그인 성공 확인 - My Page 링크로 확인 (mobile에서도 동작)
@@ -46,7 +49,7 @@ test.describe('Authentication', () => {
   test('로그아웃', async ({ page }) => {
     // 먼저 로그인
     await page.getByRole('button', { name: 'Login' }).click();
-    await page.getByPlaceholder('e.g., 202412345').fill('321000059');
+    await page.getByPlaceholder('e.g., 202412345').fill(TEST_STUDENT_ID);
     await page.getByRole('button', { name: 'Login' }).last().click();
 
     // My Page 링크로 로그인 확인
@@ -63,7 +66,7 @@ test.describe('Authentication', () => {
   test('세션 유지 - 페이지 새로고침 후에도 로그인 상태 유지', async ({ page }) => {
     // 로그인
     await page.getByRole('button', { name: 'Login' }).click();
-    await page.getByPlaceholder('e.g., 202412345').fill('321000059');
+    await page.getByPlaceholder('e.g., 202412345').fill(TEST_STUDENT_ID);
     await page.getByRole('button', { name: 'Login' }).last().click();
 
     await expect(page.getByRole('link', { name: 'My Page' })).toBeVisible({ timeout: 10000 });

@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// A regular (non-admin) account; admin IDs now require a password.
+const TEST_STUDENT_ID = process.env.E2E_STUDENT_ID ?? '202412345';
+
 test.describe('Capstone Topic Explorer - Full Flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -51,7 +54,7 @@ test.describe('Capstone Topic Explorer - Full Flow', () => {
     test.setTimeout(120000);
 
     // 로그인
-    await login(page, '321000059');
+    await login(page, TEST_STUDENT_ID);
 
     // Step 1: 국가 선택 및 관심 분야 입력
     await selectCountry(page, 'South Korea');
@@ -110,7 +113,7 @@ test.describe('Capstone Topic Explorer - Full Flow', () => {
     test.setTimeout(90000);
 
     // 로그인
-    await login(page, '321000059');
+    await login(page, TEST_STUDENT_ID);
 
     // Step 1 입력
     await selectCountry(page, 'South Korea');

@@ -55,3 +55,24 @@ export async function loginStudent(
     role: existingStudent?.role ?? 'student',
   });
 }
+
+/**
+ * Looks up a student's role without writing anything, so the admin password
+ * can be checked before a login updates the record. Returns null for new IDs.
+ */
+export async function getStudentRole(
+  supabase: SupabaseClient,
+  studentId: string
+): Promise<HandlerResult<string | null, AuthErrorCode>> {
+  const { data, error } = await supabase
+    .from('students')
+    .select('role')
+    .eq('student_id', studentId)
+    .maybeSingle<{ role: string | null }>();
+
+  if (error) {
+    return failure(500, AUTH_ERROR_CODES.DATABASE_ERROR, 'Failed to check student record');
+  }
+
+  return success(data?.role ?? null);
+}

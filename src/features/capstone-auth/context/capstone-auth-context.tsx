@@ -8,7 +8,7 @@ interface AuthContextType {
   studentId: string | null;
   role: string | null;
   isLoading: boolean;
-  login: (studentId: string) => Promise<{ studentId: string; isNewUser: boolean; lastLoginAt: string; role: string }>;
+  login: (studentId: string, adminPassword?: string) => Promise<{ studentId: string; isNewUser: boolean; lastLoginAt: string; role: string }>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
 }
