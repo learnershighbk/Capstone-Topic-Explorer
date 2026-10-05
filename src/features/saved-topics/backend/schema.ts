@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+/** Bounds the unverified lists; an analysis yields only a handful of suggestions. */
+const MAX_UNVERIFIED_ITEM_LENGTH = 1000;
+const MAX_UNVERIFIED_ITEMS = 20;
+
+const unverifiedItemsSchema = z
+  .array(z.string().max(MAX_UNVERIFIED_ITEM_LENGTH))
+  .max(MAX_UNVERIFIED_ITEMS)
+  .nullable()
+  .optional();
+
 const savedReferenceSchema = z.union([
   z.string(),
   z.object({
@@ -35,6 +45,8 @@ export const saveAnalysisRequestSchema = z.object({
   }),
   verified_data_sources: z.array(z.any()).nullable().optional(),
   verified_references: z.array(z.any()).nullable().optional(),
+  unverified_data_sources: unverifiedItemsSchema,
+  unverified_references: unverifiedItemsSchema,
 });
 
 export const savedAnalysisSummarySchema = z.object({
@@ -58,6 +70,8 @@ export const savedAnalysisDetailSchema = z.object({
   analysis_data: z.any(),
   verified_data_sources: z.any().nullable(),
   verified_references: z.any().nullable(),
+  unverified_data_sources: z.array(z.string()).nullable(),
+  unverified_references: z.array(z.string()).nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });

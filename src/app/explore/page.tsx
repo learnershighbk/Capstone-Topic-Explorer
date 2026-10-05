@@ -314,6 +314,8 @@ export default function ExplorePage() {
         analysis_data: analysis,
         verified_data_sources: verifiedDataSources,
         verified_references: verifiedReferences,
+        unverified_data_sources: unverifiedDataSources,
+        unverified_references: unverifiedReferences,
       });
     } catch (error) {
       console.error('Failed to save analysis:', error);
@@ -321,7 +323,17 @@ export default function ExplorePage() {
     } finally {
       setIsSaving(false);
     }
-  }, [country, interest, selectedIssue, selectedTopic, analysis, verifiedDataSources, verifiedReferences]);
+  }, [
+    country,
+    interest,
+    selectedIssue,
+    selectedTopic,
+    analysis,
+    verifiedDataSources,
+    verifiedReferences,
+    unverifiedDataSources,
+    unverifiedReferences,
+  ]);
 
   // Reset all state
   const handleReset = useCallback(() => {

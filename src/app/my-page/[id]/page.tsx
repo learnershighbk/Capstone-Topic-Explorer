@@ -7,13 +7,29 @@ import { Copy, Check } from 'lucide-react';
 import { Header } from '@/components/common/Header';
 import { Loader } from '@/components/common/Loader';
 import { ImportantNotice } from '@/components/common/ImportantNotice';
+import { UnverifiedList } from '@/components/common/UnverifiedList';
 import { Button } from '@/components/ui/button';
 import { useAuth, LoginModal } from '@/features/capstone-auth';
 import { apiClient } from '@/lib/remote/api-client';
 import { toast } from '@/hooks/use-toast';
 import { formatAnalysisAsText } from '@/features/explorer/lib/format-analysis-text';
+import { formatCitation } from '@/lib/citation';
 import type { SavedAnalysis, VerifiedDataSource, VerifiedReference } from '@/types';
 import { format } from 'date-fns';
+
+/**
+ * Analyses saved before unverified suggestions were stored have no such column.
+ * When nothing was verified either, every AI suggestion was unverified, so the
+ * raw suggestions are shown; otherwise which ones failed is unknown.
+ */
+const resolveUnverifiedItems = (
+  storedItems: string[] | null | undefined,
+  hasVerifiedItems: boolean,
+  rawSuggestions: string[]
+): string[] => {
+  if (storedItems) return storedItems;
+  return hasVerifiedItems ? [] : rawSuggestions;
+};
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -152,6 +168,16 @@ export default function AnalysisDetailPage({ params }: PageProps) {
 
   const verifiedDataSources = (analysis.verified_data_sources || []) as VerifiedDataSource[];
   const verifiedReferences = (analysis.verified_references || []) as VerifiedReference[];
+  const unverifiedDataSources = resolveUnverifiedItems(
+    analysis.unverified_data_sources,
+    verifiedDataSources.length > 0,
+    analysis.analysis_data.data_sources
+  );
+  const unverifiedReferences = resolveUnverifiedItems(
+    analysis.unverified_references,
+    verifiedReferences.length > 0,
+    analysis.analysis_data.key_references.map(formatCitation)
+  );
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -291,13 +317,13 @@ export default function AnalysisDetailPage({ params }: PageProps) {
             </div>
           </section>
 
-          {/* Verified Data Sources */}
+          {/* Data Sources */}
           <section className="mb-6">
             <h4 className="text-xl font-semibold border-b pb-2 mb-3">
-              Verified Data Sources
+              Data Sources
             </h4>
-            {verifiedDataSources.length > 0 ? (
-              <ul className="space-y-3">
+            {verifiedDataSources.length > 0 && (
+              <ul className="space-y-3 mb-4">
                 {verifiedDataSources.map((source, i) => (
                   <li
                     key={i}
@@ -323,20 +349,21 @@ export default function AnalysisDetailPage({ params }: PageProps) {
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="text-gray-500 italic">
-                No verified data sources available.
-              </p>
             )}
+            <UnverifiedList
+              items={unverifiedDataSources}
+              emptyMessage="No data sources available."
+              hasVerifiedItems={verifiedDataSources.length > 0}
+            />
           </section>
 
-          {/* Verified References */}
+          {/* References */}
           <section className="mb-6">
             <h4 className="text-xl font-semibold border-b pb-2 mb-3">
-              Verified References
+              References
             </h4>
-            {verifiedReferences.length > 0 ? (
-              <ul className="space-y-3">
+            {verifiedReferences.length > 0 && (
+              <ul className="space-y-3 mb-4">
                 {verifiedReferences.map((ref, i) => (
                   <li
                     key={i}
@@ -369,11 +396,12 @@ export default function AnalysisDetailPage({ params }: PageProps) {
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="text-gray-500 italic">
-                No verified references available.
-              </p>
             )}
+            <UnverifiedList
+              items={unverifiedReferences}
+              emptyMessage="No references available."
+              hasVerifiedItems={verifiedReferences.length > 0}
+            />
           </section>
 
           {/* External Links */}

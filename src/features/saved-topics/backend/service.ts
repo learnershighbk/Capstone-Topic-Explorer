@@ -88,6 +88,8 @@ export async function saveAnalysis(
       analysis_data: request.analysis_data,
       verified_data_sources: request.verified_data_sources || null,
       verified_references: request.verified_references || null,
+      unverified_data_sources: request.unverified_data_sources ?? null,
+      unverified_references: request.unverified_references ?? null,
     })
     .select('id')
     .single();

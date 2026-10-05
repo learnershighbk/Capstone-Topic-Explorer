@@ -102,6 +102,9 @@ export interface SavedAnalysis {
   analysis_data: AnalysisData;
   verified_data_sources: VerifiedDataSource[] | null;
   verified_references: VerifiedReference[] | null;
+  /** Null for analyses saved before unverified suggestions were stored. */
+  unverified_data_sources: string[] | null;
+  unverified_references: string[] | null;
   created_at: string;
   updated_at: string;
 }
