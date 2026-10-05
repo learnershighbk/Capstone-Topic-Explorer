@@ -64,11 +64,11 @@ export function registerSearchRoutes(app: Hono<AppEnv>) {
       );
     }
 
-    const { country, topic, aiSuggestions } = parseResult.data;
+    const { country, topic, issue, searchQueries, aiSuggestions } = parseResult.data;
 
     logger.info(`Verifying references for ${country} - ${topic}`);
 
-    const result = await verifyReferences(aiSuggestions);
+    const result = await verifyReferences(aiSuggestions, { country, topic, issue, searchQueries });
 
     if (result.ok) {
       logger.info(

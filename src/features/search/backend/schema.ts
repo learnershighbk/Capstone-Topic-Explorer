@@ -26,6 +26,9 @@ export const dataSourcesResponseSchema = z.object({
 });
 
 const MAX_AUTHORS = 30;
+const MAX_QUERY_LENGTH = 200;
+/** Bounds the OpenAlex calls one request can trigger. */
+const MAX_SEARCH_QUERIES = 5;
 const MIN_YEAR = 1800;
 const MAX_YEAR = 2100;
 
@@ -39,6 +42,10 @@ export const aiReferenceInputSchema = z.object({
 export const referencesRequestSchema = z.object({
   country: z.string().min(1, 'Country is required').max(MAX_COUNTRY_LENGTH),
   topic: z.string().min(1, 'Topic is required').max(MAX_TOPIC_LENGTH),
+  /** The policy issue behind the topic; widens the literature search beyond the topic title. */
+  issue: z.string().max(MAX_TOPIC_LENGTH).optional(),
+  /** AI-written literature-search queries; each becomes one discovery search. */
+  searchQueries: z.array(z.string().max(MAX_QUERY_LENGTH)).max(MAX_SEARCH_QUERIES).optional(),
   aiSuggestions: z.array(aiReferenceInputSchema).max(MAX_SUGGESTIONS),
 });
 
@@ -49,6 +56,7 @@ export const verifiedReferenceSchema = z.object({
   source: z.string(),
   url: z.string().optional(),
   doi: z.string().optional(),
+  cited_by_count: z.number().optional(),
   verified_at: z.string(),
 });
 

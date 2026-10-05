@@ -76,6 +76,8 @@ export const analysisResponseSchema = z.object({
   key_references: z.array(aiReferenceSchema),
   methodologies: z.array(methodologySchema),
   policy_questions: z.array(z.string()),
+  /** Short queries for a scholarly search engine; they drive the recent-literature discovery. */
+  search_queries: z.array(z.string()),
 });
 
 export type IssuesRequest = z.infer<typeof issuesRequestSchema>;

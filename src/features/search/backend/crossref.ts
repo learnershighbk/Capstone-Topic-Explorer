@@ -4,7 +4,8 @@ import { citedSurname, normalizeName, titlesMatch, venuesAgree } from './matchin
 const CROSSREF_WORKS_URL = 'https://api.crossref.org/works';
 const CROSSREF_ROWS = 5;
 const CROSSREF_TIMEOUT_MS = 8000;
-const CROSSREF_FIELDS = 'DOI,title,subtitle,author,issued,container-title,publisher,type';
+const CROSSREF_FIELDS =
+  'DOI,title,subtitle,author,issued,container-title,publisher,type,is-referenced-by-count';
 
 /**
  * The anonymous pool allows one request at a time at about one per second, and replies 429
@@ -36,6 +37,7 @@ export interface CrossrefWork {
   'container-title'?: string[];
   publisher?: string;
   type?: string;
+  'is-referenced-by-count'?: number;
 }
 
 interface CrossrefResponse {
@@ -137,6 +139,7 @@ export const toVerifiedReference = (
     source: work['container-title']?.[0] || work.publisher || reference.venue || 'Crossref',
     url: `https://doi.org/${work.DOI}`,
     doi: work.DOI,
+    cited_by_count: work['is-referenced-by-count'],
     verified_at: verifiedAt,
   };
 };

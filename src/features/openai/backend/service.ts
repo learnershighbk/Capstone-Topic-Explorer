@@ -12,6 +12,11 @@ import {
   type AnalysisResponse,
 } from './schema';
 import { ISSUE_COUNT, MAX_SCORE, MIN_SCORE, scorePolicyIssues } from './issue-scoring';
+import { recentSinceYear } from '@/features/search/backend/reference-selection';
+
+const SEARCH_QUERY_COUNT = 3;
+const MIN_RECENT_REFERENCES = 4;
+const MAX_FOUNDATIONAL_REFERENCES = 2;
 
 const MODEL = 'claude-sonnet-5-5';
 
@@ -327,14 +332,17 @@ export async function generateAnalysis(
   issue: string,
   topicTitle: string
 ): Promise<AiResult<AnalysisResponse>> {
+  const sinceYear = recentSinceYear(new Date().getFullYear());
+
   const system = `You are an expert academic advisor providing detailed analysis of a capstone project topic for a graduate student.
 
 Provide:
 - rationale: the topic's relevance to current policy discussions, its research feasibility (data availability and methodology), and its potential impact on policy and practice
 - data_sources: 5-8 potential data sources, each with a short description. Prefer real, verifiable sources.
-- key_references: 5-8 key references. For each, give authors (one entry per author, e.g. "Acemoglu, D."; use the organization name for institutional reports), year of publication, the exact full title, and venue (journal or publisher). Include 1-2 foundational works that define the theory or concept, and make the rest recent empirical studies, preferably published in the last 10 years. Cite only works you are confident exist, with their exact published titles; each one is checked against web search, and unverifiable ones are flagged to the student.
+- key_references: 6-8 key references. For each, give authors (one entry per author, e.g. "Acemoglu, D."; use the organization name for institutional reports), year of publication, the exact full title, and venue (journal or publisher). At least ${MIN_RECENT_REFERENCES} must be published in ${sinceYear} or later; choose well-cited, peer-reviewed empirical studies or major international organization reports on this topic or country. Include at most ${MAX_FOUNDATIONAL_REFERENCES} older foundational works that define the theory or concept. Cite only works you are confident exist, with their exact published titles; each one is checked against the Crossref registry and web search, and unverifiable ones are flagged to the student.
 - methodologies: 3-5 recommended methodologies, each with an explanation of how it applies to this research
-- policy_questions: 5 key policy research questions`;
+- policy_questions: 5 key policy research questions
+- search_queries: exactly ${SEARCH_QUERY_COUNT} queries for a scholarly search engine (OpenAlex) to find recent empirical studies on this topic. Each is 4-8 English words, no quotes or boolean operators, and names the country. Vary them: one on the policy instrument and its outcome, one on the wider policy issue in the country, one on the main method or data applied to this topic.`;
 
   const user = `Country: ${country}
 Policy Issue: ${issue}

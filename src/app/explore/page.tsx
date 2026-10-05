@@ -263,6 +263,8 @@ export default function ExplorePage() {
           }>('/api/search/references', {
             country,
             topic: selectedTopic.title,
+            issue: selectedIssue.issue,
+            searchQueries: data.search_queries,
             aiSuggestions: data.key_references,
           }),
         ]);

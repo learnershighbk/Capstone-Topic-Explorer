@@ -66,6 +66,8 @@ export interface AnalysisData {
   key_references: Array<AiReference | string>;
   methodologies: Methodology[];
   policy_questions: string[];
+  /** Absent in analyses generated or saved before literature discovery was added. */
+  search_queries?: string[];
 }
 
 // Verified sources types
@@ -86,6 +88,8 @@ export interface VerifiedReference {
   source: string;
   url?: string;
   doi?: string;
+  /** Citation count from the registry that confirmed the work; absent for web-search matches. */
+  cited_by_count?: number;
   verified_at: string;
 }
 

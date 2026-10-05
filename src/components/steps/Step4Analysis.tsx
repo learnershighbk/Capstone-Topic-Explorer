@@ -298,7 +298,8 @@ export function Step4Analysis({
                             </p>
                             <span className="text-xs text-gray-400">
                               {ref.source}
-                              {ref.doi && ` | DOI: ${ref.doi}`} | Verified
+                              {ref.doi && ` | DOI: ${ref.doi}`}
+                              {ref.cited_by_count !== undefined && ` | ${ref.cited_by_count} citations`} | Verified
                             </span>
                           </div>
                         </li>

@@ -6,6 +6,8 @@ import type { DataSourcesResponse, ReferencesResponse } from './schema';
 import { getHostname, inferSourceType, isAcademicUrl, mentionsAnyAuthor, titlesMatch } from './matching';
 import { findSourcePage, parseSourceSuggestion } from './source-page';
 import { assessCrossrefResults, searchCrossref, toVerifiedReference } from './crossref';
+import { rankDiscoveredWorks, searchOpenAlex, toDiscoveredReference } from './openalex';
+import { recentSinceYear, selectReferences } from './reference-selection';
 
 const SERPER_TIMEOUT_MS = 8000;
 const DEFAULT_RESULT_COUNT = 5;
@@ -159,20 +161,77 @@ async function verifyReference(
   return verifyReferenceByWebSearch(reference, verifiedAt);
 }
 
-export async function verifyReferences(
-  references: AiReference[]
-): Promise<HandlerResult<ReferencesResponse, SearchErrorCode>> {
-  const verifiedAt = new Date().toISOString();
+export interface ReferenceSearchContext {
+  country: string;
+  topic: string;
+  issue?: string;
+  searchQueries?: string[];
+}
 
-  const outcomes = await Promise.all(
-    references.map(async (reference) => ({
-      reference,
-      verified: await verifyReference(reference, verifiedAt),
-    }))
+const mentions = (text: string, term: string) => text.toLowerCase().includes(term.toLowerCase());
+
+/**
+ * The AI's own search queries when it supplied them, since it knows the field's vocabulary;
+ * otherwise one query on the topic and one on the wider policy issue in that country.
+ */
+export const discoveryQueries = ({
+  country,
+  topic,
+  issue,
+  searchQueries = [],
+}: ReferenceSearchContext): string[] => {
+  const aiQueries = searchQueries.map((query) => query.trim()).filter(Boolean);
+  if (aiQueries.length > 0) return aiQueries;
+
+  const topicQuery = mentions(topic, country) ? topic : `${topic} ${country}`;
+  const issueQuery = issue ? `${issue} ${country}` : '';
+  return [topicQuery, issueQuery].filter(Boolean);
+};
+
+/**
+ * Finds recent, well-cited literature on the topic independently of what the AI recalled.
+ * The AI tends to cite classics it saw often in training, so this is where current work
+ * enters the list.
+ */
+async function discoverRecentReferences(
+  context: ReferenceSearchContext,
+  currentYear: number,
+  verifiedAt: string
+): Promise<VerifiedReference[]> {
+  const sinceYear = recentSinceYear(currentYear);
+  const queryResults = await Promise.all(
+    discoveryQueries(context).map((query) =>
+      searchOpenAlex({ query, sinceYear, country: context.country })
+    )
   );
 
+  return rankDiscoveredWorks(queryResults, currentYear).map((work) =>
+    toDiscoveredReference(work, verifiedAt)
+  );
+}
+
+export async function verifyReferences(
+  references: AiReference[],
+  context: ReferenceSearchContext
+): Promise<HandlerResult<ReferencesResponse, SearchErrorCode>> {
+  const now = new Date();
+  const verifiedAt = now.toISOString();
+  const currentYear = now.getFullYear();
+
+  const [outcomes, discovered] = await Promise.all([
+    Promise.all(
+      references.map(async (reference) => ({
+        reference,
+        verified: await verifyReference(reference, verifiedAt),
+      }))
+    ),
+    discoverRecentReferences(context, currentYear, verifiedAt),
+  ]);
+
+  const verified = outcomes.flatMap(({ verified }) => (verified ? [verified] : []));
+
   return success({
-    verified_references: outcomes.flatMap(({ verified }) => (verified ? [verified] : [])),
+    verified_references: selectReferences({ verified, discovered, currentYear }),
     unverified_suggestions: outcomes
       .filter(({ verified }) => !verified)
       .map(({ reference }) => formatCitation(reference)),
