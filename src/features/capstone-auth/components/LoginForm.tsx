@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { match } from 'ts-pattern';
 import { useAuth } from '../context/capstone-auth-context';
 import { AUTH_ERROR_CODES } from '../lib/dto';
-import { isAxiosError } from '@/lib/remote/api-client';
+import { extractApiErrorMessage, isAxiosError } from '@/lib/remote/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,11 +56,11 @@ export function LoginForm({ onSuccess, layout = 'default' }: LoginFormProps) {
       match(getLoginErrorCode(loginError))
         .with(AUTH_ERROR_CODES.ADMIN_PASSWORD_REQUIRED, () => {
           setNeedsAdminPassword(true);
-          setError('This is an admin account. Please enter the admin password.');
+          setError('This is an admin account. Please enter the admin PIN.');
         })
-        .with(AUTH_ERROR_CODES.INVALID_ADMIN_PASSWORD, () => {
+        .with(AUTH_ERROR_CODES.INVALID_ADMIN_PASSWORD, AUTH_ERROR_CODES.ADMIN_LOCKED, () => {
           setAdminPassword('');
-          setError('Incorrect admin password.');
+          setError(extractApiErrorMessage(loginError, 'Incorrect admin password.'));
         })
         .otherwise(() => setError('Login failed. Please try again.'));
     } finally {
@@ -98,9 +98,10 @@ export function LoginForm({ onSuccess, layout = 'default' }: LoginFormProps) {
               type="password"
               value={adminPassword}
               onChange={handlePasswordChange}
-              placeholder="Admin password"
+              placeholder="Admin PIN"
               aria-label="Admin password"
               autoComplete="current-password"
+              inputMode="numeric"
               className="w-64 border-gray-300 bg-white text-center"
               autoFocus
             />
@@ -138,7 +139,7 @@ export function LoginForm({ onSuccess, layout = 'default' }: LoginFormProps) {
       {needsAdminPassword && (
         <div className="mb-4">
           <Label htmlFor="loginFormAdminPassword" className="block text-sm font-medium mb-2">
-            Admin Password
+            Admin PIN
           </Label>
           <Input
             type="password"
@@ -146,6 +147,7 @@ export function LoginForm({ onSuccess, layout = 'default' }: LoginFormProps) {
             value={adminPassword}
             onChange={handlePasswordChange}
             autoComplete="current-password"
+            inputMode="numeric"
             className="w-full"
             autoFocus
           />

@@ -76,3 +76,36 @@ export async function getStudentRole(
 
   return success(data?.role ?? null);
 }
+
+/** Reserves one admin login attempt and returns the count in the current 24h window. */
+export async function reserveAdminLoginAttempt(
+  supabase: SupabaseClient,
+  studentId: string
+): Promise<HandlerResult<number, AuthErrorCode>> {
+  const { data, error } = await supabase.rpc('reserve_admin_login_attempt', {
+    p_student_id: studentId,
+  });
+
+  if (error || typeof data !== 'number') {
+    return failure(500, AUTH_ERROR_CODES.DATABASE_ERROR, 'Failed to record admin login attempt');
+  }
+
+  return success(data);
+}
+
+/** Clears the attempt counter after a successful admin login. */
+export async function resetAdminLoginAttempts(
+  supabase: SupabaseClient,
+  studentId: string
+): Promise<HandlerResult<null, AuthErrorCode>> {
+  const { error } = await supabase
+    .from('students')
+    .update({ admin_failed_attempts: 0, admin_attempt_window_start: null })
+    .eq('student_id', studentId);
+
+  if (error) {
+    return failure(500, AUTH_ERROR_CODES.DATABASE_ERROR, 'Failed to reset admin login attempts');
+  }
+
+  return success(null);
+}

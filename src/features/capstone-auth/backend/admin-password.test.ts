@@ -1,50 +1,71 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkAdminAccess, getAdminPassword, isAdminPasswordValid } from './admin-password';
+import {
+  MAX_ADMIN_ATTEMPTS,
+  checkAdminPrecondition,
+  getAdminPassword,
+  isAdminPasswordValid,
+  judgeAdminAttempt,
+} from './admin-password';
 
-const PASSWORD = 'correct-horse-battery-staple-42';
+const PIN = '4821';
 
 describe('isAdminPasswordValid', () => {
-  it('accepts the exact password', () => {
-    expect(isAdminPasswordValid(PASSWORD, PASSWORD)).toBe(true);
+  it('accepts the exact PIN', () => {
+    expect(isAdminPasswordValid(PIN, PIN)).toBe(true);
   });
 
-  it('rejects a wrong, empty, or differently sized password', () => {
-    expect(isAdminPasswordValid('wrong-password-0000', PASSWORD)).toBe(false);
-    expect(isAdminPasswordValid('', PASSWORD)).toBe(false);
-    expect(isAdminPasswordValid(undefined, PASSWORD)).toBe(false);
-    expect(isAdminPasswordValid(`${PASSWORD}x`, PASSWORD)).toBe(false);
+  it('rejects a wrong, empty, or differently sized PIN', () => {
+    expect(isAdminPasswordValid('1234', PIN)).toBe(false);
+    expect(isAdminPasswordValid('', PIN)).toBe(false);
+    expect(isAdminPasswordValid(undefined, PIN)).toBe(false);
+    expect(isAdminPasswordValid(`${PIN}0`, PIN)).toBe(false);
   });
 });
 
-describe('checkAdminAccess', () => {
-  it('lets students and new IDs through without a password', () => {
-    expect(checkAdminAccess('student', undefined, PASSWORD)).toBeNull();
-    expect(checkAdminAccess(null, undefined, PASSWORD)).toBeNull();
-    expect(checkAdminAccess('student', undefined, null)).toBeNull();
+describe('checkAdminPrecondition', () => {
+  it('lets students and new IDs through without a PIN', () => {
+    expect(checkAdminPrecondition('student', undefined, PIN)).toBe('pass');
+    expect(checkAdminPrecondition(null, undefined, PIN)).toBe('pass');
+    expect(checkAdminPrecondition('student', undefined, null)).toBe('pass');
   });
 
-  it('asks an admin for the password', () => {
-    expect(checkAdminAccess('admin', undefined, PASSWORD)).toMatchObject({
+  it('asks an admin for the PIN without counting an attempt', () => {
+    expect(checkAdminPrecondition('admin', undefined, PIN)).toMatchObject({
       status: 401,
       code: 'ADMIN_PASSWORD_REQUIRED',
     });
   });
 
-  it('rejects an admin with the wrong password', () => {
-    expect(checkAdminAccess('admin', 'guess', PASSWORD)).toMatchObject({
-      status: 401,
-      code: 'INVALID_ADMIN_PASSWORD',
+  it('fails closed for admins when no PIN is configured', () => {
+    expect(checkAdminPrecondition('admin', PIN, null)).toMatchObject({
+      status: 500,
+      code: 'CONFIG_ERROR',
     });
   });
 
-  it('admits an admin with the right password', () => {
-    expect(checkAdminAccess('admin', PASSWORD, PASSWORD)).toBeNull();
+  it('sends a submitted admin PIN on to verification', () => {
+    expect(checkAdminPrecondition('admin', PIN, PIN)).toBe('verify');
+  });
+});
+
+describe('judgeAdminAttempt', () => {
+  it('admits the correct PIN within the limit', () => {
+    expect(judgeAdminAttempt(1, PIN, PIN)).toBeNull();
+    expect(judgeAdminAttempt(MAX_ADMIN_ATTEMPTS, PIN, PIN)).toBeNull();
   });
 
-  it('fails closed for admins when no password is configured', () => {
-    expect(checkAdminAccess('admin', PASSWORD, null)).toMatchObject({
-      status: 500,
-      code: 'CONFIG_ERROR',
+  it('rejects a wrong PIN and reports remaining attempts', () => {
+    expect(judgeAdminAttempt(2, '0000', PIN)).toMatchObject({
+      status: 401,
+      code: 'INVALID_ADMIN_PASSWORD',
+      message: expect.stringContaining(`${MAX_ADMIN_ATTEMPTS - 2} attempt(s) left`),
+    });
+  });
+
+  it('locks out once the limit is exceeded, even with the correct PIN', () => {
+    expect(judgeAdminAttempt(MAX_ADMIN_ATTEMPTS + 1, PIN, PIN)).toMatchObject({
+      status: 429,
+      code: 'ADMIN_LOCKED',
     });
   });
 });
@@ -54,13 +75,13 @@ describe('getAdminPassword', () => {
     vi.unstubAllEnvs();
   });
 
-  it('treats a short password as missing', () => {
-    vi.stubEnv('ADMIN_PASSWORD', 'short');
+  it('treats a PIN shorter than 4 characters as missing', () => {
+    vi.stubEnv('ADMIN_PASSWORD', '123');
     expect(getAdminPassword()).toBeNull();
   });
 
-  it('returns a sufficiently long password', () => {
-    vi.stubEnv('ADMIN_PASSWORD', PASSWORD);
-    expect(getAdminPassword()).toBe(PASSWORD);
+  it('accepts a 4-digit PIN', () => {
+    vi.stubEnv('ADMIN_PASSWORD', PIN);
+    expect(getAdminPassword()).toBe(PIN);
   });
 });

@@ -5,8 +5,13 @@ import { getSupabase, getLogger } from '@/backend/hono/context';
 import { respond, success, failure } from '@/backend/http/response';
 import { loginRequestSchema } from './schema';
 import { AUTH_ERROR_CODES } from './error';
-import { getStudentRole, loginStudent } from './service';
-import { checkAdminAccess, getAdminPassword } from './admin-password';
+import {
+  getStudentRole,
+  loginStudent,
+  reserveAdminLoginAttempt,
+  resetAdminLoginAttempts,
+} from './service';
+import { checkAdminPrecondition, getAdminPassword, judgeAdminAttempt } from './admin-password';
 import {
   SESSION_COOKIE_NAME,
   SESSION_EXPIRY_SECONDS,
@@ -59,11 +64,33 @@ export function registerCapstoneAuthRoutes(app: Hono<AppEnv>) {
       return respond(c, roleResult);
     }
 
-    const denial = checkAdminAccess(roleResult.data, adminPassword, getAdminPassword());
+    const expectedPassword = getAdminPassword();
+    const precondition = checkAdminPrecondition(roleResult.data, adminPassword, expectedPassword);
 
-    if (denial) {
-      logger.warn(`Admin login blocked for ${studentId}: ${denial.code}`);
-      return respond(c, failure(denial.status, denial.code, denial.message));
+    if (typeof precondition === 'object') {
+      logger.warn(`Admin login blocked for ${studentId}: ${precondition.code}`);
+      return respond(c, failure(precondition.status, precondition.code, precondition.message));
+    }
+
+    if (precondition === 'verify' && adminPassword && expectedPassword) {
+      const attempts = await reserveAdminLoginAttempt(supabase, studentId);
+
+      if (!attempts.ok) {
+        return respond(c, attempts);
+      }
+
+      const denial = judgeAdminAttempt(attempts.data, adminPassword, expectedPassword);
+
+      if (denial) {
+        logger.warn(`Admin login blocked for ${studentId}: ${denial.code} (attempt ${attempts.data})`);
+        return respond(c, failure(denial.status, denial.code, denial.message));
+      }
+
+      const reset = await resetAdminLoginAttempts(supabase, studentId);
+
+      if (!reset.ok) {
+        return respond(c, reset);
+      }
     }
 
     const result = await loginStudent(supabase, studentId);

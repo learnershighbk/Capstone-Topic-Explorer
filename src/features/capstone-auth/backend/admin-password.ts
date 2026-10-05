@@ -2,10 +2,17 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { AUTH_ERROR_CODES } from './error';
 
 /**
- * Admin login has no rate limiting, so the password must be long enough that
- * guessing it online is infeasible. Generate it randomly; do not pick a word.
+ * The admin password is a 4-digit PIN by operator choice. A PIN that short is
+ * only safe because attempts are capped (see MAX_ADMIN_ATTEMPTS).
  */
-const MIN_ADMIN_PASSWORD_LENGTH = 16;
+const MIN_ADMIN_PASSWORD_LENGTH = 4;
+
+/**
+ * Attempts allowed per 24-hour window, enforced atomically in the database by
+ * `reserve_admin_login_attempt` (migration 0005). With a 4-digit PIN this
+ * caps an attacker's chance per window at 5 / 10,000.
+ */
+export const MAX_ADMIN_ATTEMPTS = 5;
 
 /** Returns the configured admin password, or null when it is missing or too short. */
 export function getAdminPassword(): string | null {
@@ -30,26 +37,28 @@ export function isAdminPasswordValid(input: string | undefined, expected: string
 }
 
 export type AdminAccessDenial = {
-  status: 401 | 500;
+  status: 401 | 429 | 500;
   code:
     | typeof AUTH_ERROR_CODES.ADMIN_PASSWORD_REQUIRED
     | typeof AUTH_ERROR_CODES.INVALID_ADMIN_PASSWORD
+    | typeof AUTH_ERROR_CODES.ADMIN_LOCKED
     | typeof AUTH_ERROR_CODES.CONFIG_ERROR;
   message: string;
 };
 
 /**
- * Decides whether a login may proceed. Students pass with their ID alone;
- * admin accounts additionally need the admin password, because admin IDs are
- * not secret (one is committed to the public repository).
+ * First gate, checked before any attempt is counted. Students pass with their
+ * ID alone; admin accounts need a configured password and must submit one,
+ * because admin IDs are not secret (one is committed to the public repository).
+ * Returns `verify` when the submitted password should be checked next.
  */
-export function checkAdminAccess(
+export function checkAdminPrecondition(
   role: string | null,
   submittedPassword: string | undefined,
   expectedPassword: string | null
-): AdminAccessDenial | null {
+): AdminAccessDenial | 'pass' | 'verify' {
   if (role !== 'admin') {
-    return null;
+    return 'pass';
   }
 
   if (!expectedPassword) {
@@ -68,11 +77,33 @@ export function checkAdminAccess(
     };
   }
 
+  return 'verify';
+}
+
+/**
+ * Second gate, after one attempt has been reserved. Once the cap is exceeded
+ * even the correct password is refused, so parallel guessing cannot get past it.
+ */
+export function judgeAdminAttempt(
+  attemptsInWindow: number,
+  submittedPassword: string,
+  expectedPassword: string
+): AdminAccessDenial | null {
+  if (attemptsInWindow > MAX_ADMIN_ATTEMPTS) {
+    return {
+      status: 429,
+      code: AUTH_ERROR_CODES.ADMIN_LOCKED,
+      message: 'Too many attempts. Admin login is locked for 24 hours.',
+    };
+  }
+
   if (!isAdminPasswordValid(submittedPassword, expectedPassword)) {
+    const remaining = MAX_ADMIN_ATTEMPTS - attemptsInWindow;
+
     return {
       status: 401,
       code: AUTH_ERROR_CODES.INVALID_ADMIN_PASSWORD,
-      message: 'Incorrect admin password.',
+      message: `Incorrect admin password. ${remaining} attempt(s) left.`,
     };
   }
 
