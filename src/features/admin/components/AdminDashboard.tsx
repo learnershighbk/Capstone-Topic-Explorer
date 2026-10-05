@@ -4,6 +4,7 @@ import { Users, FileText, LogIn } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAdminStats, useAdminUsers, useAdminAnalyses } from '../hooks/useAdminData';
 import { downloadCsv } from '../lib/csv-download';
+import { AdminUsageSection } from './AdminUsageSection';
 
 function StatCard({
   icon: Icon,
@@ -80,6 +81,8 @@ export function AdminDashboard() {
         <StatCard icon={FileText} label="Total Analyses" value={stats?.totalAnalyses} isLoading={statsLoading} />
         <StatCard icon={LogIn} label="Today Logins" value={stats?.todayLoginCount} isLoading={statsLoading} />
       </div>
+
+      <AdminUsageSection />
 
       {/* Users Table */}
       <section className="mb-10">

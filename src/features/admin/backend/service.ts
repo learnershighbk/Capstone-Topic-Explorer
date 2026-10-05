@@ -1,7 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { success, failure, type HandlerResult } from '@/backend/http/response';
 import { ADMIN_ERROR_CODES, type AdminErrorCode } from './error';
-import type { AdminStats, AdminUser, AdminAnalysis } from './schema';
+import type { AdminStats, AdminUser, AdminAnalysis, AdminUsage } from './schema';
+import { kstMidnightIso, recentKstDates, summarizeUsage, toKstDate, type UsageRow } from './usage-summary';
+
+const USAGE_WINDOW_DAYS = 7;
 
 export async function getAdminStats(
   supabase: SupabaseClient
@@ -22,13 +25,10 @@ export async function getAdminStats(
     return failure(500, ADMIN_ERROR_CODES.DATABASE_ERROR, 'Failed to count analyses');
   }
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
   const { count: todayLoginCount, error: loginError } = await supabase
     .from('students')
     .select('*', { count: 'exact', head: true })
-    .gte('last_login_at', todayStart.toISOString());
+    .gte('last_login_at', kstMidnightIso(toKstDate(new Date())));
 
   if (loginError) {
     return failure(500, ADMIN_ERROR_CODES.DATABASE_ERROR, 'Failed to count today logins');
@@ -97,4 +97,23 @@ export async function getAdminAnalyses(
   }));
 
   return success(analyses);
+}
+
+/** Paid API usage for the last week, so operators can spot heavy or abusive accounts. */
+export async function getAdminUsage(
+  supabase: SupabaseClient
+): Promise<HandlerResult<AdminUsage, AdminErrorCode>> {
+  const today = toKstDate(new Date());
+  const oldestDate = recentKstDates(today, USAGE_WINDOW_DAYS).at(-1) ?? today;
+
+  const { data, error } = await supabase
+    .from('ai_usage_daily')
+    .select('student_id, usage_date, endpoint, call_count')
+    .gte('usage_date', oldestDate);
+
+  if (error) {
+    return failure(500, ADMIN_ERROR_CODES.DATABASE_ERROR, 'Failed to fetch AI usage');
+  }
+
+  return success(summarizeUsage((data ?? []) as UsageRow[], today, USAGE_WINDOW_DAYS));
 }

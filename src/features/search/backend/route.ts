@@ -6,12 +6,13 @@ import { dataSourcesRequestSchema, referencesRequestSchema } from './schema';
 import { SEARCH_ERROR_CODES } from './error';
 import { verifyDataSources, verifyReferences } from './service';
 import { requireSession } from '@/features/capstone-auth/backend/middleware';
+import { enforceDailyLimit } from '@/features/openai/backend/usage-limit';
 
 export function registerSearchRoutes(app: Hono<AppEnv>) {
   app.use('/api/search/*', requireSession());
 
   // POST /api/search/data-sources
-  app.post('/api/search/data-sources', async (c) => {
+  app.post('/api/search/data-sources', enforceDailyLimit('search'), async (c) => {
     const logger = getLogger(c);
 
     const body = await c.req.json();
@@ -45,7 +46,7 @@ export function registerSearchRoutes(app: Hono<AppEnv>) {
   });
 
   // POST /api/search/references
-  app.post('/api/search/references', async (c) => {
+  app.post('/api/search/references', enforceDailyLimit('search'), async (c) => {
     const logger = getLogger(c);
 
     const body = await c.req.json();
@@ -67,7 +68,7 @@ export function registerSearchRoutes(app: Hono<AppEnv>) {
 
     logger.info(`Verifying references for ${country} - ${topic}`);
 
-    const result = await verifyReferences(country, topic, aiSuggestions);
+    const result = await verifyReferences(aiSuggestions);
 
     if (result.ok) {
       logger.info(

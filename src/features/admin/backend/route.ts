@@ -8,7 +8,7 @@ import {
   getSessionFromCookie,
 } from '@/features/capstone-auth/backend/session';
 import { ADMIN_ERROR_CODES } from './error';
-import { getAdminStats, getAdminUsers, getAdminAnalyses } from './service';
+import { getAdminStats, getAdminUsers, getAdminAnalyses, getAdminUsage } from './service';
 
 function requireAdmin(cookieValue: string | undefined) {
   const session = getSessionFromCookie(cookieValue);
@@ -64,6 +64,20 @@ export function registerAdminRoutes(app: Hono<AppEnv>) {
     logger.info(`Admin analyses list requested by: ${auth.session.studentId}`);
 
     const result = await getAdminAnalyses(supabase);
+    return respond(c, result);
+  });
+
+  // GET /api/admin/usage
+  app.get('/api/admin/usage', async (c) => {
+    const logger = getLogger(c);
+    const supabase = getSupabase(c);
+
+    const auth = requireAdmin(getCookie(c, SESSION_COOKIE_NAME));
+    if (!auth.ok) return respond(c, auth.error);
+
+    logger.info(`Admin usage requested by: ${auth.session.studentId}`);
+
+    const result = await getAdminUsage(supabase);
     return respond(c, result);
   });
 }

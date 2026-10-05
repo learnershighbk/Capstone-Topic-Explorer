@@ -15,6 +15,7 @@ import {
   type DailyLimitDetails,
 } from '@/features/openai/lib/dto';
 import { toast } from '@/hooks/use-toast';
+import { formatCitation } from '@/lib/citation';
 import type {
   PolicyIssue,
   Topic,
@@ -31,6 +32,7 @@ const AI_ENDPOINT_LABELS: Record<AiEndpoint, string> = {
   issues: '정책 이슈 생성',
   topics: '연구 주제 생성',
   analysis: '주제 분석',
+  search: '자료 검증',
 };
 
 type ApiErrorPayload = { error?: { code?: string; details?: unknown } };
@@ -271,7 +273,7 @@ export default function ExplorePage() {
         setUnverifiedReferences(referencesRes.data.unverified_suggestions);
       } catch {
         setUnverifiedDataSources(data.data_sources);
-        setUnverifiedReferences(data.key_references);
+        setUnverifiedReferences(data.key_references.map(formatCitation));
       } finally {
         setIsVerifying(false);
         setAnalysisPhase('done');

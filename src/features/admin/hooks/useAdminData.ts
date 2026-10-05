@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/remote/api-client';
-import type { AdminStats, AdminUser, AdminAnalysis } from '../backend/schema';
+import type { AdminStats, AdminUser, AdminAnalysis, AdminUsage } from '../backend/schema';
 
 export function useAdminStats() {
   return useQuery<AdminStats>({
@@ -29,6 +29,16 @@ export function useAdminAnalyses() {
     queryKey: ['admin', 'analyses'],
     queryFn: async () => {
       const { data } = await apiClient.get<AdminAnalysis[]>('/api/admin/analyses');
+      return data;
+    },
+  });
+}
+
+export function useAdminUsage() {
+  return useQuery<AdminUsage>({
+    queryKey: ['admin', 'usage'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<AdminUsage>('/api/admin/usage');
       return data;
     },
   });

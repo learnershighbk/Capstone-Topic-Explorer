@@ -21,6 +21,34 @@ export const adminAnalysisSchema = z.object({
   createdAt: z.string(),
 });
 
+export const usageCountsSchema = z.object({
+  issues: z.number(),
+  topics: z.number(),
+  analysis: z.number(),
+  search: z.number(),
+});
+
+export const adminUsageSchema = z.object({
+  today: z.string(),
+  limits: usageCountsSchema,
+  daily: z.array(
+    z.object({
+      date: z.string(),
+      activeStudents: z.number(),
+      counts: usageCountsSchema,
+    })
+  ),
+  todayByStudent: z.array(
+    z.object({
+      studentId: z.string(),
+      counts: usageCountsSchema,
+      limitReached: z.array(usageCountsSchema.keyof()),
+    })
+  ),
+});
+
 export type AdminStats = z.infer<typeof adminStatsSchema>;
 export type AdminUser = z.infer<typeof adminUserSchema>;
 export type AdminAnalysis = z.infer<typeof adminAnalysisSchema>;
+export type UsageCounts = z.infer<typeof usageCountsSchema>;
+export type AdminUsage = z.infer<typeof adminUsageSchema>;
