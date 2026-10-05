@@ -7,7 +7,9 @@ import { Step1Scope, Step2Issues, Step3Topics, Step4Analysis } from '@/component
 import { AnalysisProgressLoader } from '@/components/common/AnalysisProgressLoader';
 import { useAuth } from '@/features/capstone-auth';
 import { useStepStore } from '@/features/explorer/stores/use-step-store';
-import { apiClient, isAxiosError } from '@/lib/remote/api-client';
+import { match, P } from 'ts-pattern';
+import { apiClient, isAxiosError, extractApiErrorMessage } from '@/lib/remote/api-client';
+import { OPENAI_ERROR_CODES } from '@/features/openai/lib/dto';
 import { toast } from '@/hooks/use-toast';
 import type {
   PolicyIssue,
@@ -19,36 +21,59 @@ import type {
 
 type AnalysisPhase = 'generating' | 'verifying-sources' | 'done';
 
+const DESTRUCTIVE = 'destructive' as const;
+
+const getApiErrorCode = (error: unknown) => {
+  if (!isAxiosError(error)) {
+    return undefined;
+  }
+
+  const payload = error.response?.data as { error?: { code?: string } } | undefined;
+
+  return payload?.error?.code;
+};
+
 function getErrorToast(error: unknown) {
-  if (isAxiosError(error)) {
-    const status = error.response?.status;
-    if (status === 429) {
-      return {
-        title: 'Too Many Requests',
-        description: 'Please wait a moment and try again.',
-        variant: 'destructive' as const,
-      };
-    }
-    if (status && status >= 500) {
-      return {
-        title: 'Server Error',
-        description: 'A server error occurred. Please try again later.',
-        variant: 'destructive' as const,
-      };
-    }
-  }
-  if (error instanceof Error && error.message === 'Network Error') {
-    return {
-      title: 'Network Error',
-      description: 'Please check your internet connection.',
-      variant: 'destructive' as const,
-    };
-  }
-  return {
-    title: 'Error',
-    description: 'An error occurred. Please try again.',
-    variant: 'destructive' as const,
-  };
+  const status = isAxiosError(error) ? error.response?.status : undefined;
+  const code = getApiErrorCode(error);
+
+  return match({ status, code })
+    .with({ code: OPENAI_ERROR_CODES.QUOTA_EXCEEDED }, () => ({
+      title: 'Service Unavailable',
+      description: 'AI 서비스 사용량이 소진되었습니다. 관리자에게 문의해 주세요.',
+      variant: DESTRUCTIVE,
+    }))
+    .with({ code: OPENAI_ERROR_CODES.CONTENT_REFUSED }, () => ({
+      title: 'Request Declined',
+      description: extractApiErrorMessage(error, 'Please rephrase your input and try again.'),
+      variant: DESTRUCTIVE,
+    }))
+    .with({ status: 429 }, () => ({
+      title: 'Too Many Requests',
+      description: extractApiErrorMessage(error, 'Please wait a moment and try again.'),
+      variant: DESTRUCTIVE,
+    }))
+    .with({ status: P.number.gte(500) }, () => ({
+      title: 'Server Error',
+      description: extractApiErrorMessage(
+        error,
+        'A server error occurred. Please try again later.'
+      ),
+      variant: DESTRUCTIVE,
+    }))
+    .when(
+      () => error instanceof Error && error.message === 'Network Error',
+      () => ({
+        title: 'Network Error',
+        description: 'Please check your internet connection.',
+        variant: DESTRUCTIVE,
+      })
+    )
+    .otherwise(() => ({
+      title: 'Error',
+      description: 'An error occurred. Please try again.',
+      variant: DESTRUCTIVE,
+    }));
 }
 
 export default function ExplorePage() {

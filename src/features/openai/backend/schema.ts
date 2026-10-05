@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 // Issues API
 export const issuesRequestSchema = z.object({
