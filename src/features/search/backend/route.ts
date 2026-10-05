@@ -68,7 +68,7 @@ export function registerSearchRoutes(app: Hono<AppEnv>) {
 
     logger.info(`Verifying references for ${country} - ${topic}`);
 
-    const result = await verifyReferences(country, topic, aiSuggestions);
+    const result = await verifyReferences(aiSuggestions);
 
     if (result.ok) {
       logger.info(

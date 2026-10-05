@@ -1,3 +1,4 @@
+import { escapeRegExp } from 'es-toolkit';
 import type { TrustedSource } from '@/types';
 
 export const TRUSTED_SOURCES: TrustedSource[] = [
@@ -256,8 +257,11 @@ export const TRUSTED_SOURCES: TrustedSource[] = [
   },
 ];
 
+/** Whole-word match (plurals allowed), so "tax" fires on "taxes" but not on "taxonomy". */
+const containsWord = (text: string, word: string) =>
+  new RegExp(`\\b${escapeRegExp(word)}(?:s|es)?\\b`, 'i').test(text);
+
 export function findTrustedSources(country: string, topic: string): TrustedSource[] {
-  const lowerTopic = topic.toLowerCase();
 
   return TRUSTED_SOURCES.filter((source) => {
     const countryMatch =
@@ -268,7 +272,7 @@ export function findTrustedSources(country: string, topic: string): TrustedSourc
 
     const topicMatch =
       source.topics.includes('all') ||
-      source.topics.some((t) => lowerTopic.includes(t.toLowerCase()));
+      source.topics.some((t) => containsWord(topic, t));
 
     return countryMatch && topicMatch;
   });

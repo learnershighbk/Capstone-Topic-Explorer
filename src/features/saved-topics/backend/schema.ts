@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+const savedReferenceSchema = z.union([
+  z.string(),
+  z.object({
+    authors: z.array(z.string()),
+    year: z.number(),
+    title: z.string(),
+    venue: z.string(),
+  }),
+]);
+
 export const saveAnalysisRequestSchema = z.object({
   country: z.string().min(1),
   interest: z.string().min(1),
@@ -14,7 +24,7 @@ export const saveAnalysisRequestSchema = z.object({
       impact: z.string(),
     }),
     data_sources: z.array(z.string()),
-    key_references: z.array(z.string()),
+    key_references: z.array(savedReferenceSchema),
     methodologies: z.array(
       z.object({
         methodology: z.string(),

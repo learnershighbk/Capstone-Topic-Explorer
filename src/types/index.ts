@@ -51,10 +51,19 @@ export interface Methodology {
   explanation: string;
 }
 
+/** A reference as proposed by the AI, before web verification. */
+export interface AiReference {
+  authors: string[];
+  year: number;
+  title: string;
+  venue: string;
+}
+
 export interface AnalysisData {
   rationale: Rationale;
   data_sources: string[];
-  key_references: string[];
+  /** Plain strings appear only in analyses saved before references became structured. */
+  key_references: Array<AiReference | string>;
   methodologies: Methodology[];
   policy_questions: string[];
 }

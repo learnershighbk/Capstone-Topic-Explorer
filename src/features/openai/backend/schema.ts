@@ -56,10 +56,17 @@ export const methodologySchema = z.object({
   explanation: z.string(),
 });
 
+export const aiReferenceSchema = z.object({
+  authors: z.array(z.string()),
+  year: z.number().int(),
+  title: z.string(),
+  venue: z.string(),
+});
+
 export const analysisResponseSchema = z.object({
   rationale: rationaleSchema,
   data_sources: z.array(z.string()),
-  key_references: z.array(z.string()),
+  key_references: z.array(aiReferenceSchema),
   methodologies: z.array(methodologySchema),
   policy_questions: z.array(z.string()),
 });

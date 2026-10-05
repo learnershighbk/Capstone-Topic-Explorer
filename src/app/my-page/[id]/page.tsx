@@ -358,12 +358,13 @@ export default function AnalysisDetailPage({ params }: PageProps) {
                           {ref.title}
                         </span>
                       )}
-                      {ref.authors && ref.authors.length > 0 && (
-                        <p className="text-sm text-gray-600">
-                          {ref.authors.join(', ')} ({ref.year})
-                        </p>
-                      )}
-                      <span className="text-xs text-gray-400">{ref.source}</span>
+                      <p className="text-sm text-gray-600">
+                        {ref.authors?.length > 0 && `${ref.authors.join(', ')} `}({ref.year})
+                      </p>
+                      <span className="text-xs text-gray-400">
+                        {ref.source}
+                        {ref.doi && ` | DOI: ${ref.doi}`}
+                      </span>
                     </div>
                   </li>
                 ))}

@@ -57,7 +57,7 @@ export function formatAnalysisAsText({
     lines.push('## Verified References');
     verifiedReferences.forEach((r) => {
       const authorsStr = r.authors.length > 0 ? `${r.authors.join(', ')} (${r.year})` : '';
-      const urlStr = r.url ? ` - ${r.url}` : '';
+      const urlStr = r.doi ? ` - https://doi.org/${r.doi}` : r.url ? ` - ${r.url}` : '';
       lines.push(`- ${r.title}${authorsStr ? ` | ${authorsStr}` : ''}${urlStr}`);
     });
     lines.push('');
